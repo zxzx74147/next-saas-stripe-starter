@@ -3,9 +3,12 @@ import { constructMetadata } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { EmptyPlaceholder } from "@/components/shared/empty-placeholder";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { ArrowRight, Video, CreditCard, Settings } from "lucide-react";
 
 export const metadata = constructMetadata({
-  title: "Dashboard – SaaS Starter",
+  title: "Dashboard – SaaS Starter",
   description: "Create and manage content.",
 });
 
@@ -16,16 +19,73 @@ export default async function DashboardPage() {
     <>
       <DashboardHeader
         heading="Dashboard"
-        text={`Current Role : ${user?.role} — Change your role in settings.`}
+        text={`Welcome back, ${user?.name || "User"}. What would you like to do today?`}
       />
-      <EmptyPlaceholder>
-        <EmptyPlaceholder.Icon name="post" />
-        <EmptyPlaceholder.Title>No content created</EmptyPlaceholder.Title>
-        <EmptyPlaceholder.Description>
-          You don&apos;t have any content yet. Start creating content.
-        </EmptyPlaceholder.Description>
-        <Button>Add Content</Button>
-      </EmptyPlaceholder>
+      
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Video Projects</CardTitle>
+            <Video className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">Create Videos</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Create and manage your video projects
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Link href="/dashboard/video-projects" className="w-full">
+              <Button className="w-full">
+                Go to Video Projects
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardFooter>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Credits</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">Manage Credits</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              View your credit balance and usage
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Link href="/dashboard/billing" className="w-full">
+              <Button variant="outline" className="w-full">
+                Go to Billing
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardFooter>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Account</CardTitle>
+            <Settings className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">Settings</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Manage your account settings and preferences
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Link href="/dashboard/settings" className="w-full">
+              <Button variant="outline" className="w-full">
+                Go to Settings
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
     </>
   );
 }

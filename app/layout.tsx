@@ -17,6 +17,12 @@ interface RootLayoutProps {
 export const metadata = constructMetadata();
 
 export default function RootLayout({ children }: RootLayoutProps) {
+  // Initialize services
+  if (process.env.NODE_ENV === 'production') {
+    // Only call in production to avoid development hot reload issues
+    fetch('/api/init').catch(console.error);
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
