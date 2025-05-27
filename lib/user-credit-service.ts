@@ -4,6 +4,21 @@ import * as creditService from './credit-service';
 const prisma = new PrismaClient();
 
 /**
+ * Gets a user's current credit balance
+ */
+export async function getUserCreditBalance(userId: string) {
+  const creditBalance = await prisma.$queryRaw`
+    SELECT * FROM user_credit_balances WHERE "userId" = ${userId}
+  `;
+  
+  if (!creditBalance || !Array.isArray(creditBalance) || creditBalance.length === 0) {
+    return null;
+  }
+  
+  return creditBalance[0];
+}
+
+/**
  * Initializes or updates a user's credit balance based on their subscription
  * Called when a user subscribes or changes their subscription
  */

@@ -24,7 +24,7 @@ import {
   Trash2
 } from "lucide-react";
 import { format } from "date-fns";
-import { VideoTasksList } from "@/components/video/video-tasks-list";
+import { ProjectTaskDashboard } from "@/components/video/project-task-dashboard";
 
 interface VideoTask {
   id: string;
@@ -53,7 +53,6 @@ interface VideoProject {
 export default function VideoProjectPage({ params }: { params: { id: string } }) {
   const [project, setProject] = useState<VideoProject | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -226,7 +225,7 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
 
   // Format date
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "PPP p");
+    return format(new Date(dateString), "MMM d, yyyy");
   };
 
   // Navigate to create video page
@@ -234,22 +233,28 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
     router.push(`/dashboard/video-projects/${projectId}/create-video`);
   };
 
-  // Update a task in the project
+  // Update task in project state
   const updateTask = (updatedTask: VideoTask) => {
     if (!project) return;
     
+    // Create a new tasks array with the updated task
+    const updatedTasks = project.videoTasks.map(task => 
+      task.id === updatedTask.id ? updatedTask : task
+    );
+    
+    // Update the project state
     setProject({
       ...project,
-      videoTasks: project.videoTasks.map(task => 
-        task.id === updatedTask.id ? updatedTask : task
-      )
+      videoTasks: updatedTasks
     });
   };
 
   if (loading) {
     return (
-      <div className="container mx-auto py-6 flex justify-center items-center h-64">
-        <p>Loading project details...</p>
+      <div className="container mx-auto py-6">
+        <div className="flex justify-center items-center h-64">
+          <p>Loading project details...</p>
+        </div>
       </div>
     );
   }
@@ -257,259 +262,151 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
   if (!project) {
     return (
       <div className="container mx-auto py-6">
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            className="gap-1"
-            onClick={() => router.push("/dashboard/video-projects")}
-          >
-            <ArrowLeft className="h-4 w-4" />
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">Project Not Found</h2>
+          <p className="text-muted-foreground mt-2">The requested project could not be found.</p>
+          <Button onClick={() => router.push("/dashboard/video-projects")} className="mt-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Projects
           </Button>
         </div>
-        
-        <Card className="text-center p-6">
-          <CardContent className="pt-6 pb-4 flex flex-col items-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-            <h3 className="text-xl font-medium">Project Not Found</h3>
-            <p className="text-muted-foreground mt-2 mb-6">
-              The project you are looking for does not exist or you do not have access to it.
-            </p>
-            <Button onClick={() => router.push("/dashboard/video-projects")}>
-              Return to Projects
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          className="gap-1"
-          onClick={() => router.push("/dashboard/video-projects")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Projects
-        </Button>
-      </div>
-
-      <div className="flex justify-between items-start mb-6">
+    <div className="container mx-auto py-6 space-y-6">
+      {/* Header with back button */}
+      <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold">{project.name}</h1>
-            {getStatusBadge(project.status)}
-          </div>
-          {project.description && (
-            <p className="text-muted-foreground mt-1">{project.description}</p>
+          <Button variant="outline" size="sm" onClick={() => router.push("/dashboard/video-projects")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Projects
+          </Button>
+        </div>
+        <div className="flex space-x-2">
+          <Button variant="outline" size="sm" onClick={handleDeleteProject}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete Project
+          </Button>
+          {!isEditing ? (
+            <Button size="sm" onClick={() => setIsEditing(true)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Details
+            </Button>
+          ) : (
+            <Button size="sm" onClick={handleSaveProject} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Save Changes
+            </Button>
           )}
         </div>
-        
-        <div className="flex gap-2">
-          {!isEditing && (
+      </div>
+
+      {/* Project details section */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="md:col-span-3">
+          <Card>
+            <CardHeader className="pb-3">
+              {isEditing ? (
+                <div className="space-y-2">
+                  <Label htmlFor="name">Project Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={editForm.name}
+                    onChange={handleEditFormChange}
+                    placeholder="Enter project name"
+                  />
+                </div>
+              ) : (
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-2xl">{project.name}</CardTitle>
+                  {getStatusBadge(project.status)}
+                </div>
+              )}
+
+              {isEditing ? (
+                <div className="space-y-2 mt-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    value={editForm.description}
+                    onChange={handleEditFormChange}
+                    placeholder="Enter project description"
+                    rows={2}
+                  />
+                </div>
+              ) : (
+                project.description && (
+                  <CardDescription>{project.description}</CardDescription>
+                )
+              )}
+            </CardHeader>
+            
+            <CardContent className="text-sm pb-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-muted-foreground">Created</p>
+                  <p>{formatDate(project.createdAt)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Updated</p>
+                  <p>{formatDate(project.updatedAt)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Project Content Section */}
+        <div className="md:col-span-3 space-y-6">
+          {isEditing ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Video Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="videoSubject">Video Subject</Label>
+                  <Input
+                    id="videoSubject"
+                    name="videoSubject"
+                    value={editForm.videoSubject}
+                    onChange={handleEditFormChange}
+                    placeholder="What is this video about?"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="videoScript">Video Script</Label>
+                  <Textarea
+                    id="videoScript"
+                    name="videoScript"
+                    value={editForm.videoScript}
+                    onChange={handleEditFormChange}
+                    placeholder="Enter a script or description for your video"
+                    rows={6}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
             <>
-              <Button onClick={handleCreateVideo} disabled={project.status === "ARCHIVED"}>
-                <Play className="mr-2 h-4 w-4" />
-                Create Video
-              </Button>
-              <Button variant="outline" onClick={() => setIsEditing(true)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Project
-              </Button>
+              {/* Project Task Dashboard */}
+              <ProjectTaskDashboard 
+                project={project} 
+                onTaskUpdate={updateTask}
+                onCreateVideo={handleCreateVideo}
+              />
             </>
           )}
         </div>
       </div>
-
-      {isEditing ? (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Edit Project</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Project Name *</Label>
-              <Input
-                id="name"
-                name="name"
-                value={editForm.name}
-                onChange={handleEditFormChange}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={editForm.description}
-                onChange={handleEditFormChange}
-                rows={3}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="videoSubject">Video Subject</Label>
-              <Input
-                id="videoSubject"
-                name="videoSubject"
-                value={editForm.videoSubject}
-                onChange={handleEditFormChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="videoScript">Video Script Template</Label>
-              <Textarea
-                id="videoScript"
-                name="videoScript"
-                value={editForm.videoScript}
-                onChange={handleEditFormChange}
-                rows={5}
-              />
-            </div>
-          </CardContent>
-          
-          <CardFooter className="flex justify-between">
-            <div>
-              <Button 
-                variant="destructive" 
-                onClick={handleDeleteProject}
-                className="mr-2"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Project
-              </Button>
-            </div>
-            <div>
-              <Button
-                variant="outline"
-                onClick={() => setIsEditing(false)}
-                className="mr-2"
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSaveProject} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardFooter>
-        </Card>
-      ) : (
-        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="mt-6">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="videos">
-              Videos
-              <Badge variant="outline" className="ml-2">
-                {project?.videoTasks?.length || 0}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="mt-6 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-medium">Project Status</h3>
-                  <p>{project.status}</p>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium">Created</h3>
-                  <p>{formatDate(project.createdAt)}</p>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium">Last Updated</h3>
-                  <p>{formatDate(project.updatedAt)}</p>
-                </div>
-                
-                {project.videoSubject && (
-                  <div>
-                    <h3 className="font-medium">Video Subject</h3>
-                    <p>{project.videoSubject}</p>
-                  </div>
-                )}
-                
-                {project.videoScript && (
-                  <div>
-                    <h3 className="font-medium">Video Script Template</h3>
-                    <pre className="bg-secondary p-4 rounded-md overflow-x-auto whitespace-pre-wrap">
-                      {project.videoScript}
-                    </pre>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="videos" className="mt-6">
-            {project && project.videoTasks.length > 0 ? (
-              <VideoTasksList 
-                tasks={project.videoTasks} 
-                projectId={project.id}
-                onTaskStatusChange={updateTask}
-              />
-            ) : (
-              <Card className="text-center p-6">
-                <CardContent className="pt-6 pb-4 flex flex-col items-center">
-                  <Film className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-medium">No videos yet</h3>
-                  <p className="text-muted-foreground mt-2 mb-6">
-                    Start creating your first video
-                  </p>
-                  <Button onClick={handleCreateVideo}>
-                    <Play className="mr-2 h-4 w-4" />
-                    Create Video
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="settings" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <h3 className="font-medium">Danger Zone</h3>
-                  <p className="text-muted-foreground">
-                    Once you delete a project, there is no going back. Please be certain.
-                  </p>
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleDeleteProject}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete Project
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      )}
     </div>
   );
 } 
