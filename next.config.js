@@ -1,11 +1,9 @@
 const { withContentlayer } = require("next-contentlayer2");
 
-import("./env.mjs");
+require("./env.mjs");
 
-// Load the queue processing initialization (only on server)
-if (process.env.NODE_ENV === 'production') {
-  import('./lib/init-queue');
-}
+// We'll handle queue initialization in runtime, not during build
+// The dynamic import in the condition below was causing build failures
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

@@ -1,10 +1,19 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, VideoProject, VideoTask } from '@prisma/client';
 import * as creditService from './credit-service';
 import moneyPrinterClient, { VideoGenerationParams } from './money-printer-client';
 
 // Define types that match the schema.prisma enums
 type VideoProjectStatus = 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
 type VideoTaskStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+
+// Extended types with relations
+interface VideoProjectWithTasks extends VideoProject {
+  videoTasks: VideoTask[];
+}
+
+interface VideoTaskWithProject extends VideoTask {
+  project?: VideoProject;
+}
 
 const prisma = new PrismaClient();
 
@@ -17,7 +26,7 @@ export async function createVideoProject(
   description?: string,
   videoSubject?: string,
   videoScript?: string
-): Promise<any> {
+): Promise<VideoProject> {
   return await prisma.videoProject.create({
     data: {
       userId,
@@ -36,8 +45,8 @@ export async function createVideoProject(
 export async function getVideoProjectsForUser(
   userId: string,
   status?: VideoProjectStatus
-): Promise<any[]> {
-  const where: any = { userId };
+): Promise<VideoProjectWithTasks[]> {
+  const where: Prisma.VideoProjectWhereInput = { userId };
   
   if (status) {
     where.status = status;
@@ -65,8 +74,8 @@ export async function getVideoProjectsForUser(
 export async function getVideoProjectById(
   projectId: string,
   userId?: string
-): Promise<any> {
-  const where: any = { id: projectId };
+): Promise<VideoProjectWithTasks | null> {
+  const where: Prisma.VideoProjectWhereInput = { id: projectId };
   
   if (userId) {
     where.userId = userId;
@@ -97,7 +106,7 @@ export async function updateVideoProject(
     videoSubject?: string;
     videoScript?: string;
   }
-): Promise<any> {
+): Promise<VideoProject> {
   return await prisma.videoProject.update({
     where: {
       id: projectId,
@@ -135,7 +144,7 @@ export async function createVideoTask(
   projectId: string,
   userId: string,
   params: VideoGenerationParams
-): Promise<any> {
+): Promise<VideoTask> {
   // Validate credit balance
   const creditParams: creditService.CreditCalculationParams = {
     duration: params.duration,
@@ -157,7 +166,7 @@ export async function createVideoTask(
         projectId,
         taskId: `task_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`,
         status: 'PENDING' as VideoTaskStatus,
-        videoSettings: params as any,
+        videoSettings: params as unknown as Prisma.JsonObject,
         creditsCost: validationResult.requiredCredits
       }
     });
@@ -205,7 +214,7 @@ export async function createVideoTask(
 /**
  * Get a video task by id
  */
-export async function getVideoTaskById(taskId: string): Promise<any> {
+export async function getVideoTaskById(taskId: string): Promise<VideoTaskWithProject | null> {
   return await prisma.videoTask.findUnique({
     where: { id: taskId },
     include: {
@@ -222,7 +231,7 @@ export async function updateVideoTaskStatus(
   status: VideoTaskStatus,
   progress: number = 0,
   videoUrl?: string
-): Promise<any> {
+): Promise<VideoTask> {
   return await prisma.videoTask.update({
     where: { id: taskId },
     data: {
@@ -236,7 +245,7 @@ export async function updateVideoTaskStatus(
 /**
  * Sync a video task status with MoneyPrinterTurbo
  */
-export async function syncVideoTaskStatus(taskId: string): Promise<any> {
+export async function syncVideoTaskStatus(taskId: string): Promise<VideoTask> {
   const task = await prisma.videoTask.findUnique({
     where: { id: taskId }
   });
@@ -251,33 +260,33 @@ export async function syncVideoTaskStatus(taskId: string): Promise<any> {
   }
   
   try {
-    const mpStatus = await moneyPrinterClient.getTaskStatus(task.taskId);
+    // Get the task status from MoneyPrinterTurbo
+    const taskStatus = await moneyPrinterClient.getTaskStatus(task.taskId);
     
-    // Map MoneyPrinterTurbo status to our status
-    let status: VideoTaskStatus = task.status as VideoTaskStatus;
+    // Update the task status in our database
+    let status: VideoTaskStatus;
     
-    if (mpStatus.status === 'pending') {
-      status = 'PENDING';
-    } else if (mpStatus.status === 'processing') {
-      status = 'PROCESSING';
-    } else if (mpStatus.status === 'completed') {
+    if (taskStatus.status === 'completed') {
       status = 'COMPLETED';
-    } else if (mpStatus.status === 'failed') {
+    } else if (taskStatus.status === 'processing') {
+      status = 'PROCESSING';
+    } else if (taskStatus.status === 'failed') {
       status = 'FAILED';
+    } else {
+      status = 'PENDING';
     }
     
     // Update the task
-    return await prisma.videoTask.update({
-      where: { id: taskId },
-      data: {
-        status,
-        progress: mpStatus.progress,
-        videoUrl: mpStatus.videoUrl
-      }
-    });
+    return await updateVideoTaskStatus(
+      taskId,
+      status,
+      taskStatus.progress,
+      taskStatus.videoUrl
+    );
   } catch (error) {
-    console.error('Error syncing task status:', error);
-    throw error;
+    console.error('Error syncing task status with MoneyPrinterTurbo:', error);
+    // Don't change the task status on error, just return it
+    return task;
   }
 }
 
@@ -285,47 +294,40 @@ export async function syncVideoTaskStatus(taskId: string): Promise<any> {
  * Cancel a video task
  */
 export async function cancelVideoTask(taskId: string, userId: string): Promise<boolean> {
-  // Verify the task belongs to the user
-  const task = await prisma.videoTask.findFirst({
-    where: {
-      id: taskId,
-      project: {
-        userId
-      }
+  const task = await prisma.videoTask.findUnique({
+    where: { id: taskId },
+    include: {
+      project: true
     }
   });
   
   if (!task) {
-    throw new Error('Task not found or not authorized');
+    throw new Error('Task not found');
   }
   
-  // Only pending or processing tasks can be canceled
+  if (task.project?.userId !== userId) {
+    throw new Error('Unauthorized');
+  }
+  
   if (task.status !== 'PENDING' && task.status !== 'PROCESSING') {
-    throw new Error('Task cannot be canceled in its current state');
+    throw new Error('Task cannot be canceled');
   }
   
   try {
-    // Cancel task in MoneyPrinterTurbo
+    // Cancel the task with MoneyPrinterTurbo
     await moneyPrinterClient.cancelTask(task.taskId);
     
-    // Update status in our database
-    await prisma.videoTask.update({
-      where: { id: taskId },
-      data: {
-        status: 'FAILED' as VideoTaskStatus
-      }
-    });
+    // Update the task status in our database
+    await updateVideoTaskStatus(taskId, 'FAILED', task.progress);
     
-    // Refund credits (partial refund based on progress)
-    const refundPercentage = task.progress < 50 ? 0.5 : 0.25;
-    const refundAmount = Math.floor(task.creditsCost * refundPercentage);
-    
-    if (refundAmount > 0) {
+    // Refund credits if task was still pending
+    if (task.status === 'PENDING') {
+      // Add credits back to the user's account
       await creditService.addCredits(
         userId,
-        refundAmount,
+        task.creditsCost,
         'PURCHASE',
-        `Refund for canceled video task (${refundPercentage * 100}%)`
+        `Refund for canceled video task #${taskId}`
       );
     }
     

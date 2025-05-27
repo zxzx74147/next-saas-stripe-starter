@@ -24,6 +24,7 @@ import {
   Trash2
 } from "lucide-react";
 import { format } from "date-fns";
+import { VideoTasksList } from "@/components/video/video-tasks-list";
 
 interface VideoTask {
   id: string;
@@ -233,6 +234,18 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
     router.push(`/dashboard/video-projects/${projectId}/create-video`);
   };
 
+  // Update a task in the project
+  const updateTask = (updatedTask: VideoTask) => {
+    if (!project) return;
+    
+    setProject({
+      ...project,
+      videoTasks: project.videoTasks.map(task => 
+        task.id === updatedTask.id ? updatedTask : task
+      )
+    });
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-6 flex justify-center items-center h-64">
@@ -397,14 +410,19 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
           </CardFooter>
         </Card>
       ) : (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="mt-6">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="videos">Videos</TabsTrigger>
+            <TabsTrigger value="videos">
+              Videos
+              <Badge variant="outline" className="ml-2">
+                {project?.videoTasks?.length || 0}
+              </Badge>
+            </TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="overview" className="mt-4">
+          <TabsContent value="overview" className="mt-6 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Project Details</CardTitle>
@@ -444,106 +462,31 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
             </Card>
           </TabsContent>
           
-          <TabsContent value="videos" className="mt-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Videos</CardTitle>
-                  <CardDescription>
-                    Videos generated for this project
-                  </CardDescription>
-                </div>
-                <Button onClick={handleCreateVideo} disabled={project.status === "ARCHIVED"}>
-                  <Play className="mr-2 h-4 w-4" />
-                  Create Video
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {project.videoTasks.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Film className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium">No videos yet</h3>
-                    <p className="text-muted-foreground mt-2 mb-6">
-                      Create your first video to get started
-                    </p>
-                    <Button onClick={handleCreateVideo} disabled={project.status === "ARCHIVED"}>
-                      <Play className="mr-2 h-4 w-4" />
-                      Create Video
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {project.videoTasks.map((task) => (
-                      <Card key={task.id}>
-                        <CardContent className="pt-6">
-                          <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center">
-                              {getTaskStatusIcon(task.status)}
-                              <span className="ml-2 font-medium">
-                                {task.status === "COMPLETED" ? "Video Ready" : task.status}
-                              </span>
-                              {task.status === "PROCESSING" && (
-                                <span className="ml-2 text-sm text-muted-foreground">
-                                  {task.progress}% complete
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {formatDate(task.createdAt)}
-                            </div>
-                          </div>
-                          
-                          <div className="mb-4">
-                            <p><span className="font-medium">Prompt:</span> {task.videoSettings.prompt}</p>
-                            <p><span className="font-medium">Duration:</span> {task.videoSettings.duration} seconds</p>
-                            <p><span className="font-medium">Quality:</span> {task.videoSettings.quality}</p>
-                            {task.videoSettings.style && (
-                              <p><span className="font-medium">Style:</span> {task.videoSettings.style}</p>
-                            )}
-                            <p><span className="font-medium">Credits Used:</span> {task.creditsCost}</p>
-                          </div>
-                          
-                          {task.status === "COMPLETED" && task.videoUrl && (
-                            <div className="mt-4">
-                              <video 
-                                src={task.videoUrl} 
-                                controls 
-                                className="w-full rounded-md border"
-                              />
-                              <div className="mt-2 flex justify-end">
-                                <a 
-                                  href={task.videoUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-primary hover:underline"
-                                >
-                                  Download Video
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {(task.status === "PENDING" || task.status === "PROCESSING") && (
-                            <div className="mt-4">
-                              <Button 
-                                variant="outline"
-                                size="sm"
-                                onClick={() => router.push(`/dashboard/video-tasks/${task.id}`)}
-                              >
-                                View Details
-                              </Button>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <TabsContent value="videos" className="mt-6">
+            {project && project.videoTasks.length > 0 ? (
+              <VideoTasksList 
+                tasks={project.videoTasks} 
+                projectId={project.id}
+                onTaskStatusChange={updateTask}
+              />
+            ) : (
+              <Card className="text-center p-6">
+                <CardContent className="pt-6 pb-4 flex flex-col items-center">
+                  <Film className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-medium">No videos yet</h3>
+                  <p className="text-muted-foreground mt-2 mb-6">
+                    Start creating your first video
+                  </p>
+                  <Button onClick={handleCreateVideo}>
+                    <Play className="mr-2 h-4 w-4" />
+                    Create Video
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
           
-          <TabsContent value="settings" className="mt-4">
+          <TabsContent value="settings" className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Project Settings</CardTitle>

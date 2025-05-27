@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import moneyPrinterClient from './money-printer-client';
 import * as videoProjectService from './video-project-service';
 
@@ -28,48 +28,45 @@ const POLL_INTERVAL = 10000; // 10 seconds
  */
 export async function processVideoQueue() {
   try {
-    // 1. Get all pending tasks, ordered by creation date
+    // Check how many tasks are currently being processed
+    const processingCount = await prisma.videoTask.count({
+      where: { status: 'PROCESSING' }
+    });
+
+    // If we're already at maximum capacity, don't start new tasks
+    if (processingCount >= MAX_CONCURRENT_TASKS) {
+      console.log(`Already processing ${processingCount} tasks, at capacity.`);
+      return;
+    }
+
+    // Calculate how many slots are available
+    const availableSlots = MAX_CONCURRENT_TASKS - processingCount;
+    console.log(`${availableSlots} processing slots available.`);
+
+    // Find pending tasks, ordered by creation date (oldest first)
     const pendingTasks = await prisma.videoTask.findMany({
-      where: {
-        status: 'PENDING'
-      },
-      orderBy: {
-        createdAt: 'asc'
-      },
-      take: 10, // Limit to 10 tasks at a time for processing
-      include: {
-        project: true
-      }
+      where: { status: 'PENDING' },
+      orderBy: { createdAt: 'asc' },
+      take: 10, // Limit the number of tasks we'll start in one go
+      include: { project: true }
     });
 
-    // 2. Get currently processing tasks count
-    const processingTasksCount = await prisma.videoTask.count({
-      where: {
-        status: 'PROCESSING'
-      }
-    });
+    console.log(`Found ${pendingTasks.length} pending tasks.`);
 
-    // 3. Calculate how many new tasks we can start
-    const availableSlots = MAX_CONCURRENT_TASKS - processingTasksCount;
-    
-    if (availableSlots <= 0) {
-      console.log('No available processing slots. Currently processing:', processingTasksCount);
-      return;
-    }
+    // Start processing tasks until we reach capacity
+    for (let i = 0; i < Math.min(availableSlots, pendingTasks.length); i++) {
+      const task = pendingTasks[i];
+      
+      // Update the task status to PROCESSING
+      await prisma.videoTask.update({
+        where: { id: task.id },
+        data: { status: 'PROCESSING', progress: 0 }
+      });
 
-    // 4. Start processing tasks up to the available slots
-    const tasksToProcess = pendingTasks.slice(0, availableSlots);
-    
-    if (tasksToProcess.length === 0) {
-      console.log('No pending tasks in the queue');
-      return;
-    }
-    
-    console.log(`Starting to process ${tasksToProcess.length} tasks`);
-    
-    // 5. Process each task
-    for (const task of tasksToProcess) {
-      await startVideoProcessing(task);
+      console.log(`Started processing task ${task.id} (${task.taskId})`);
+      
+      // You might want to initiate actual processing here, depending on your architecture
+      // For example, you might call an API or start a background job
     }
   } catch (error) {
     console.error('Error processing video queue:', error);
@@ -129,7 +126,7 @@ function startBackgroundTaskMonitoring(taskId: string, moneyPrinterTaskId: strin
       while (!completed && retries < MAX_RETRIES) {
         try {
           // Get task status from MoneyPrinter
-          const taskStatus = await moneyPrinterClient.getTaskStatus(moneyPrinterTaskId);
+                      const taskStatus = await moneyPrinterClient.getTaskStatus(moneyPrinterTaskId);
           
           // Update our task status
           if (taskStatus.status === 'completed') {
@@ -137,7 +134,7 @@ function startBackgroundTaskMonitoring(taskId: string, moneyPrinterTaskId: strin
               taskId,
               'COMPLETED',
               100,
-              taskStatus.videoUrl
+              taskStatus.outputUrl
             );
             completed = true;
           } else if (taskStatus.status === 'failed') {
