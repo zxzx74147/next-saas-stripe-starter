@@ -20,6 +20,12 @@ export const sidebarLinks: SidebarNavItem[] = [
         authorizeOnly: UserRole.USER,
       },
       {
+        href: "/dashboard/video-library",
+        icon: "media",
+        title: "Video Library",
+        authorizeOnly: UserRole.USER,
+      },
+      {
         href: "/dashboard/billing",
         icon: "billing",
         title: "Billing",
