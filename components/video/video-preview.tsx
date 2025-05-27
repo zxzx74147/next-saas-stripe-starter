@@ -1,146 +1,175 @@
-import { useState, useEffect, useRef } from 'react';
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
+"use client";
+
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, PlayCircle, RotateCw, PauseCircle, CheckCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Play, Pause, RefreshCw, Download } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface VideoPreviewProps {
   videoUrl?: string;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
   progress: number;
-  title?: string;
-  onRetry?: () => void;
+  onRefresh?: () => void;
   className?: string;
-  autoPlay?: boolean;
 }
 
 export function VideoPreview({
   videoUrl,
   status,
   progress,
-  title,
-  onRetry,
-  className,
-  autoPlay = false
+  onRefresh,
+  className = "",
 }: VideoPreviewProps) {
-  const [isPlaying, setIsPlaying] = useState(autoPlay);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  // Handle play/pause
+  const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Toggle play/pause
   const togglePlay = () => {
     if (!videoRef.current) return;
     
-    if (isPlaying) {
-      videoRef.current.pause();
-    } else {
-      videoRef.current.play();
-    }
-    
-    setIsPlaying(!isPlaying);
-  };
-
-  // Handle video load event
-  const handleVideoLoad = () => {
-    setIsLoaded(true);
-    if (autoPlay && videoRef.current) {
+    if (videoRef.current.paused) {
       videoRef.current.play();
       setIsPlaying(true);
+    } else {
+      videoRef.current.pause();
+      setIsPlaying(false);
     }
   };
-
-  // Reset playing state when video changes
+  
+  // Handle download
+  const handleDownload = () => {
+    if (!videoUrl) return;
+    
+    // Create an anchor element
+    const anchor = document.createElement("a");
+    anchor.href = videoUrl;
+    anchor.download = `video_${Date.now()}.mp4`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  };
+  
+  // Reset playing state when video url changes
   useEffect(() => {
-    setIsLoaded(false);
-    setIsPlaying(autoPlay);
-  }, [videoUrl, autoPlay]);
-
-  return (
-    <Card className={cn("overflow-hidden", className)}>
-      <CardContent className="p-0">
-        <div className="relative aspect-video bg-black/10 flex items-center justify-center">
-          {status === 'COMPLETED' && videoUrl ? (
-            <>
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                className={cn(
-                  "w-full h-full object-contain",
-                  !isLoaded && "hidden"
-                )}
-                controls={false}
-                onLoadedData={handleVideoLoad}
-                onEnded={() => setIsPlaying(false)}
-              />
-              
-              {!isLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <RotateCw className="w-8 h-8 text-primary animate-spin" />
-                </div>
-              )}
-              
-              {isLoaded && (
-                <div 
-                  className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-                  onClick={togglePlay}
-                >
-                  <Button variant="ghost" size="icon" className="w-16 h-16 rounded-full bg-black/30 text-white">
-                    {isPlaying ? (
-                      <PauseCircle className="w-12 h-12" />
-                    ) : (
-                      <PlayCircle className="w-12 h-12" />
-                    )}
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : status === 'PROCESSING' ? (
-            <div className="flex flex-col items-center justify-center p-6 w-full">
-              <RotateCw className="w-12 h-12 text-primary animate-spin mb-4" />
-              <h3 className="text-xl font-medium mb-2">Processing video...</h3>
-              <p className="text-muted-foreground mb-4 text-center">
-                This might take a few minutes depending on the video length and quality.
-              </p>
-              <Progress value={progress} className="w-full max-w-md" />
-              <p className="text-sm text-muted-foreground mt-2">{progress}% complete</p>
+    setIsPlaying(false);
+  }, [videoUrl]);
+  
+  // Render different states based on status
+  if (status === "PENDING") {
+    return (
+      <Card className={`overflow-hidden ${className}`}>
+        <CardContent className="p-2">
+          <div className="bg-muted aspect-video flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-muted-foreground font-medium mb-2">Waiting to start processing</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onRefresh}
+                className="mt-2"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Status
+              </Button>
             </div>
-          ) : status === 'FAILED' ? (
-            <div className="flex flex-col items-center justify-center p-6">
-              <AlertCircle className="w-12 h-12 text-destructive mb-4" />
-              <h3 className="text-xl font-medium mb-2">Generation failed</h3>
-              <p className="text-muted-foreground mb-4 text-center">
-                There was an error processing your video. Please try again.
-              </p>
-              {onRetry && (
-                <Button onClick={onRetry} variant="outline">
-                  <RotateCw className="mr-2 h-4 w-4" />
-                  Try Again
-                </Button>
-              )}
-            </div>
-          ) : status === 'PENDING' ? (
-            <div className="flex flex-col items-center justify-center p-6">
-              <RotateCw className="w-12 h-12 text-primary animate-spin mb-4" />
-              <h3 className="text-xl font-medium mb-2">In queue</h3>
-              <p className="text-muted-foreground text-center">
-                Your video is waiting to be processed. This should begin shortly.
-              </p>
-            </div>
-          ) : null}
-        </div>
-        
-        {title && status === 'COMPLETED' && (
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-              <span>{title}</span>
-            </div>
-            <Button variant="ghost" size="sm" onClick={togglePlay}>
-              {isPlaying ? "Pause" : "Play"}
-            </Button>
           </div>
-        )}
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (status === "PROCESSING") {
+    return (
+      <Card className={`overflow-hidden ${className}`}>
+        <CardContent className="p-2">
+          <div className="bg-muted aspect-video flex flex-col items-center justify-center">
+            <div className="text-center px-4 w-full">
+              <p className="text-muted-foreground font-medium mb-4">Generating your video</p>
+              <Progress value={progress} className="mb-2" />
+              <p className="text-sm text-muted-foreground">{progress}% complete</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onRefresh}
+                className="mt-4"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Status
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (status === "FAILED") {
+    return (
+      <Card className={`overflow-hidden ${className}`}>
+        <CardContent className="p-2">
+          <div className="bg-muted aspect-video flex items-center justify-center">
+            <div className="text-center px-4">
+              <p className="text-destructive font-medium mb-2">Video generation failed</p>
+              <p className="text-sm text-muted-foreground mb-4">There was an error processing your video request.</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onRefresh}
+                className="mt-2"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Status
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // For completed videos with URL
+  if (status === "COMPLETED" && videoUrl) {
+    return (
+      <Card className={`overflow-hidden ${className}`}>
+        <CardContent className="p-2 relative group">
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            className="w-full aspect-video object-cover"
+            poster={videoUrl + "?poster=true"}
+            onClick={togglePlay}
+          />
+          
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                onClick={togglePlay}
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </Button>
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                onClick={handleDownload}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Fallback for completed status but no URL
+  return (
+    <Card className={`overflow-hidden ${className}`}>
+      <CardContent className="p-2">
+        <Skeleton className="w-full aspect-video" />
       </CardContent>
     </Card>
   );

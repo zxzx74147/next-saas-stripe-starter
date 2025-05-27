@@ -2,6 +2,11 @@ const { withContentlayer } = require("next-contentlayer2");
 
 import("./env.mjs");
 
+// Load the queue processing initialization (only on server)
+if (process.env.NODE_ENV === 'production') {
+  import('./lib/init-queue');
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
