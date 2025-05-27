@@ -29,6 +29,22 @@ export interface VideoTask {
   project?: VideoProject;
   editedVersions?: VideoTask[];
   editedFrom?: VideoTask;
+  
+  // Sharing fields
+  isPublic?: boolean;
+  shareableId?: string;
+  expirationDate?: string;
+  allowDownload?: boolean;
+  embedOptions?: EmbedOptions;
+}
+
+export interface EmbedOptions {
+  width?: number;
+  height?: number;
+  autoplay?: boolean;
+  showControls?: boolean;
+  theme?: 'light' | 'dark';
+  showBranding?: boolean;
 }
 
 export interface VideoGenerationParams {
@@ -40,4 +56,19 @@ export interface VideoGenerationParams {
   aspectRatio?: '16:9' | '9:16' | '1:1';
   audioUrl?: string;
   seed?: number;
+}
+
+export interface ShareVideoParams {
+  isPublic: boolean;
+  expirationDate?: string;
+  allowDownload?: boolean;
+}
+
+export interface EmbedCodeParams {
+  width: number;
+  height: number;
+  autoplay?: boolean;
+  showControls?: boolean;
+  theme?: 'light' | 'dark';
+  showBranding?: boolean;
 } 
