@@ -6,13 +6,27 @@ generator client {
 }
 
 datasource db {
-  provider     = "postgresql"
-  url          = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum UserRole {
   ADMIN
   USER
+}
+
+enum VideoProjectStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum VideoTaskStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 model Account {
@@ -67,6 +81,10 @@ model User {
   stripePriceId          String?   @map(name: "stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")
 
+  videoProjects      VideoProject[]
+  creditBalance      UserCreditBalance?
+  creditTransactions CreditTransaction[]
+
   @@map(name: "users")
 }
 
@@ -77,4 +95,86 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map(name: "verification_tokens")
+}
+
+model VideoProject {
+  id           String             @id @default(cuid())
+  userId       String
+  name         String
+  description  String?
+  status       VideoProjectStatus @default(DRAFT)
+  videoSubject String?
+  videoScript  String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoTasks VideoTask[]
+
+  @@index([userId])
+  @@map(name: "video_projects")
+}
+
+model VideoTask {
+  id            String          @id @default(cuid())
+  projectId     String
+  taskId        String
+  status        VideoTaskStatus @default(PENDING)
+  progress      Int             @default(0)
+  videoUrl      String?
+  videoSettings Json
+  creditsCost   Int
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  project            VideoProject        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creditTransactions CreditTransaction[]
+
+  @@index([projectId])
+  @@map(name: "video_tasks")
+}
+
+model SubscriptionConfig {
+  id             String   @id @default(cuid())
+  tier           String   @unique
+  maxDuration    Int // seconds
+  maxQuality     String
+  monthlyCredits Int
+  overageRate    Float
+  overageCap     Float
+  features       Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map(name: "subscription_configs")
+}
+
+model CreditTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int // credits used (negative) or purchased (positive)
+  type        String // 'generation', 'purchase', 'allocation', 'overage'
+  description String?
+  videoTaskId String?
+  createdAt   DateTime @default(now())
+
+  user      User       @relation(fields: [userId], references: [id])
+  videoTask VideoTask? @relation(fields: [videoTaskId], references: [id])
+
+  @@index([userId])
+  @@index([videoTaskId])
+  @@map(name: "credit_transactions")
+}
+
+model UserCreditBalance {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  currentBalance    Int      @default(0)
+  monthlyAllocation Int      @default(0)
+  lastResetDate     DateTime @default(now())
+  overageThisMonth  Float    @default(0)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map(name: "user_credit_balances")
 }
