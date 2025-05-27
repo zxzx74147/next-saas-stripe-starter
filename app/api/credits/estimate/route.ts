@@ -5,47 +5,42 @@ import * as creditService from '@/lib/credit-service';
 // POST /api/credits/estimate - Estimate credit cost for a video
 export async function POST(req: NextRequest) {
   try {
-    // Get the user session
     const session = await auth();
-    
-    if (!session?.user?.email) {
+    const userId = session?.user?.id;
+
+    if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
-    
-    // Get the request body
+
+    // Get request body
     const body = await req.json();
+    const { duration, quality, hasAdvancedEffects } = body;
     
-    // Validate the request body
-    if (!body.duration || !body.quality) {
+    if (!duration || !quality) {
       return NextResponse.json(
         { error: 'Missing required parameters' },
         { status: 400 }
       );
     }
     
-    // Extract parameters
-    const {
-      duration,
-      quality,
-      hasAdvancedEffects = false
-    } = body;
-    
-    // Calculate the credit cost
-    const creditCost = creditService.calculateCreditCost(
-      duration,
-      quality,
-      hasAdvancedEffects
+    // Calculate credit cost
+    const creditCost = await creditService.calculateCreditCost(
+      {
+        duration: Number(duration),
+        quality: quality,
+        hasAdvancedEffects: Boolean(hasAdvancedEffects)
+      },
+      userId
     );
     
-    // Return the credit cost
-    return NextResponse.json({ creditCost });
+    return NextResponse.json(creditCost);
   } catch (error: any) {
-    console.error('Error estimating credit cost:', error);
+    console.error('Error estimating credits:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to estimate credit cost' },
+      { error: error.message || 'Failed to estimate credits' },
       { status: 500 }
     );
   }

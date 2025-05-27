@@ -116,21 +116,27 @@ model VideoProject {
 }
 
 model VideoTask {
-  id            String          @id @default(cuid())
-  projectId     String
-  taskId        String
-  status        VideoTaskStatus @default(PENDING)
-  progress      Int             @default(0)
-  videoUrl      String?
-  videoSettings Json
-  creditsCost   Int
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id             String          @id @default(cuid())
+  projectId      String
+  taskId         String
+  status         VideoTaskStatus @default(PENDING)
+  progress       Int             @default(0)
+  videoUrl       String?
+  thumbnailUrl   String?
+  videoSettings  Json
+  creditsCost    Int
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  isEdited       Boolean         @default(false)
+  originalTaskId String?
 
   project            VideoProject        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   creditTransactions CreditTransaction[]
+  editedFrom         VideoTask?          @relation("EditHistory", fields: [originalTaskId], references: [id])
+  editedVersions     VideoTask[]         @relation("EditHistory")
 
   @@index([projectId])
+  @@index([originalTaskId])
   @@map(name: "video_tasks")
 }
 

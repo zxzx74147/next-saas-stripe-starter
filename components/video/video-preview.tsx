@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 
 interface VideoPreviewProps {
   videoUrl?: string;
+  thumbnailUrl?: string;
   status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
   progress: number;
   onRefresh?: () => void;
@@ -17,6 +18,7 @@ interface VideoPreviewProps {
 
 export function VideoPreview({
   videoUrl,
+  thumbnailUrl,
   status,
   progress,
   onRefresh,
@@ -131,6 +133,9 @@ export function VideoPreview({
   
   // For completed videos with URL
   if (status === "COMPLETED" && videoUrl) {
+    // Determine the poster (thumbnail) to use
+    const posterUrl = thumbnailUrl || (videoUrl + "?poster=true");
+    
     return (
       <Card className={`overflow-hidden ${className}`}>
         <CardContent className="p-2 relative group">
@@ -138,7 +143,7 @@ export function VideoPreview({
             ref={videoRef}
             src={videoUrl}
             className="w-full aspect-video object-cover"
-            poster={videoUrl + "?poster=true"}
+            poster={posterUrl}
             onClick={togglePlay}
           />
           
