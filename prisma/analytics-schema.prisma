@@ -1,0 +1,64 @@
+// Analytics schema additions for tracking user engagement
+// Add these models to the main schema.prisma file
+
+enum AnalyticsEventType {
+  VIDEO_VIEW
+  VIDEO_SHARE
+  VIDEO_EMBED
+  VIDEO_DOWNLOAD
+  LINK_CLICK
+  EMBED_VIEW
+  PROFILE_VIEW
+}
+
+model AnalyticsEvent {
+  id              String            @id @default(cuid())
+  eventType       AnalyticsEventType
+  userId          String?           // Can be null for anonymous users
+  videoTaskId     String?
+  shareableId     String?
+  ipAddress       String?           // Hashed IP address for privacy
+  userAgent       String?
+  referrer        String?
+  eventData       Json?             // Additional data specific to event type
+  createdAt       DateTime          @default(now())
+  sessionId       String?           // To track unique sessions
+  
+  // Relations
+  user            User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  videoTask       VideoTask?        @relation(fields: [videoTaskId], references: [id], onDelete: Cascade)
+
+  @@index([eventType])
+  @@index([userId])
+  @@index([videoTaskId])
+  @@index([shareableId])
+  @@index([createdAt])
+  @@index([sessionId])
+  @@map(name: "analytics_events")
+}
+
+model AnalyticsSummary {
+  id              String            @id @default(cuid())
+  videoTaskId     String            @unique
+  totalViews      Int               @default(0)
+  uniqueViews     Int               @default(0)
+  totalShares     Int               @default(0)
+  totalEmbeds     Int               @default(0)
+  totalDownloads  Int               @default(0)
+  embedViews      Int               @default(0)
+  lastUpdatedAt   DateTime          @default(now())
+  
+  // Relations
+  videoTask       VideoTask         @relation(fields: [videoTaskId], references: [id], onDelete: Cascade)
+
+  @@map(name: "analytics_summaries")
+}
+
+// Add these relations to the existing models
+
+// Add to the User model
+analyticsEvents AnalyticsEvent[]
+
+// Add to the VideoTask model
+analyticsEvents   AnalyticsEvent[]
+analyticsSummary  AnalyticsSummary? 

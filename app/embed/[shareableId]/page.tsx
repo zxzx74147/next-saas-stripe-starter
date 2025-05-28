@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { initAnalytics, trackEmbedView } from '@/lib/analytics';
 
 interface SharedVideo {
   id: string;
@@ -24,12 +25,18 @@ export default function EmbedVideoPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hasTrackedView = useRef(false);
   
   // Parse embed options from URL parameters
   const autoplay = searchParams.get('autoplay') === '1';
   const showControls = searchParams.get('controls') !== '0';
   const theme = searchParams.get('theme') === 'dark' ? 'dark' : 'light';
   const showBranding = searchParams.get('branding') !== '0';
+
+  // Initialize analytics
+  useEffect(() => {
+    initAnalytics();
+  }, []);
 
   useEffect(() => {
     const fetchSharedVideo = async () => {
@@ -58,6 +65,14 @@ export default function EmbedVideoPage() {
       fetchSharedVideo();
     }
   }, [shareableId]);
+  
+  // Track embed view when video is loaded
+  useEffect(() => {
+    if (video && !hasTrackedView.current && typeof shareableId === 'string') {
+      trackEmbedView(video.id, shareableId);
+      hasTrackedView.current = true;
+    }
+  }, [video, shareableId]);
   
   // Handle autoplay when video is loaded
   useEffect(() => {

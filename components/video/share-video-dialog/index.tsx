@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { CalendarIcon, Copy, Check, Link, Code, Globe, Lock, Calendar as CalendarIcon2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { trackVideoShare, trackVideoEmbed } from '@/lib/analytics';
 
 interface ShareVideoDialogProps {
   open: boolean;
@@ -129,6 +130,9 @@ export function ShareVideoDialog({ open, onOpenChange, videoId }: ShareVideoDial
       
       const data = await response.json();
       setShareInfo(data);
+      
+      // Track share event
+      trackVideoShare(videoId, 'dialog');
     } catch (error) {
       console.error('Error sharing video:', error);
     } finally {
@@ -155,6 +159,9 @@ export function ShareVideoDialog({ open, onOpenChange, videoId }: ShareVideoDial
       
       const data = await response.json();
       setEmbedInfo(data);
+      
+      // Track embed event
+      trackVideoEmbed(videoId);
     } catch (error) {
       console.error('Error generating embed code:', error);
     } finally {

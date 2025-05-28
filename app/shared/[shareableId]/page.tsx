@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Play, Pause, Download, RefreshCw, ExternalLink } from 'lucide-react';
+import { initAnalytics, trackVideoView, trackVideoDownload } from '@/lib/analytics';
 
 interface SharedVideo {
   id: string;
@@ -28,6 +29,12 @@ export default function SharedVideoPage() {
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hasTrackedView = useRef(false);
+
+  // Initialize analytics
+  useEffect(() => {
+    initAnalytics();
+  }, []);
 
   useEffect(() => {
     const fetchSharedVideo = async () => {
@@ -57,6 +64,14 @@ export default function SharedVideoPage() {
     }
   }, [shareableId]);
   
+  // Track video view when the video is loaded
+  useEffect(() => {
+    if (video && !hasTrackedView.current) {
+      trackVideoView(video.id, shareableId as string);
+      hasTrackedView.current = true;
+    }
+  }, [video, shareableId]);
+  
   // Toggle play/pause
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -73,6 +88,11 @@ export default function SharedVideoPage() {
   // Handle download
   const handleDownload = () => {
     if (!video?.videoUrl) return;
+    
+    // Track the download event
+    if (video) {
+      trackVideoDownload(video.id);
+    }
     
     // Create an anchor element
     const anchor = document.createElement('a');
