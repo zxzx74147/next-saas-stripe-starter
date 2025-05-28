@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/utils';
+import { exportVideoAnalytics, exportTimeSeriesData } from '@/lib/analytics/export';
 
 interface VideoInfo {
   id: string;
@@ -175,6 +176,19 @@ export function VideoAnalytics({ videoId }: VideoAnalyticsProps) {
               90d
             </TabsTrigger>
           </TabsList>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              const data = { video, metrics };
+              exportVideoAnalytics(videoId, period, data);
+              exportTimeSeriesData(videoId, period, timeSeriesData);
+            }}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
         </div>
       </div>
       

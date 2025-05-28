@@ -40,6 +40,9 @@
   - Implemented basic reporting with graphs and statistics
   - Added analytics API endpoints for data retrieval
   - Created analytics utility functions for tracking events
+  - Added account-level usage summary dashboard
+  - Implemented data export functionality for analytics data
+  - Created tabbed interface for overview and video-specific analytics
 
 ## Upcoming Tasks
 
