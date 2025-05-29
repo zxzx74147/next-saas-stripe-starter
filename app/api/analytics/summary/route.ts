@@ -67,7 +67,6 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         videoSettings: true,
-        thumbnailUrl: true,
         videoUrl: true,
         createdAt: true
       }
@@ -98,7 +97,7 @@ export async function GET(req: NextRequest) {
         shares,
         embeds,
         downloads,
-        thumbnailUrl: video.thumbnailUrl,
+        thumbnailUrl: (video.videoSettings as any).thumbnailUrl || null,
         videoUrl: video.videoUrl,
         createdAt: video.createdAt
       };
