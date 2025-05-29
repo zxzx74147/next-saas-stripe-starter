@@ -281,7 +281,7 @@ export async function syncVideoTaskStatus(taskId: string): Promise<VideoTask> {
       taskId,
       status,
       taskStatus.progress,
-      taskStatus.videoUrl
+      taskStatus.outputUrl
     );
   } catch (error) {
     console.error('Error syncing task status with MoneyPrinterTurbo:', error);

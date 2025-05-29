@@ -17,7 +17,7 @@ interface VideoSettings {
 }
 
 // Define the shape of the task with included project
-interface TaskWithProject extends VideoTask {
+interface TaskWithProject extends Omit<VideoTask, 'thumbnailUrl'> {
   project: {
     name: string;
     userId: string;

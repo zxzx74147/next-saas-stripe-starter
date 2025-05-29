@@ -42,7 +42,7 @@ const QUEUE_CHECK_INTERVAL = 30000; // 30 seconds
 const STATUS_UPDATE_INTERVAL = 10000; // 10 seconds
 
 let isProcessing = false;
-let statusInterval: NodeJS.Timeout | null = null;
+let statusInterval: any = null;
 let activeTasks: Set<string> = new Set();
 
 /**
@@ -114,12 +114,12 @@ async function processQueue(): Promise<void> {
         const taskStatus = await moneyPrinterClient.getTaskStatus(task.taskId);
         
         // Update the task status
-        if (taskStatus.status === 'completed' && taskStatus.videoUrl) {
+        if (taskStatus.status === 'completed' && taskStatus.outputUrl) {
           await videoProjectService.updateVideoTaskStatus(
             task.id,
             'COMPLETED',
             100,
-            taskStatus.videoUrl
+            taskStatus.outputUrl
           );
           
           // Remove from active tasks

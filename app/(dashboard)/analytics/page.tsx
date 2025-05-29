@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { DashboardHeader } from '@/components/dashboard/header';
 import { VideoAnalytics } from '@/components/dashboard/analytics/video-analytics';
 import { UsageSummary } from '@/components/dashboard/analytics/usage-summary';
@@ -29,7 +29,7 @@ interface VideoTask {
   createdAt: string;
 }
 
-export default function AnalyticsPage() {
+function AnalyticsContent() {
   const searchParams = useSearchParams();
   const videoIdFromUrl = searchParams.get('video');
   
@@ -232,5 +232,13 @@ export default function AnalyticsPage() {
         </TabsContent>
       </Tabs>
     </>
+  );
+}
+
+export default function AnalyticsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AnalyticsContent />
+    </Suspense>
   );
 } 

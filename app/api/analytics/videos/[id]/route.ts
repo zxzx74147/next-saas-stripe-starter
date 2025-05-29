@@ -16,7 +16,7 @@ interface TimeSeriesDataPoint {
   embedViews: number;
 }
 
-interface VideoTaskWithProject extends VideoTask {
+interface VideoTaskWithProject extends Omit<VideoTask, 'thumbnailUrl'> {
   project: {
     id: string;
     name: string;

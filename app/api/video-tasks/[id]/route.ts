@@ -32,7 +32,7 @@ export async function GET(
     }
     
     // Check if the task belongs to the user
-    if (task.project.userId !== session.user.id) {
+    if (!task.project || task.project.userId !== session.user.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }
@@ -40,7 +40,7 @@ export async function GET(
     }
     
     // Sync the task status with MoneyPrinterTurbo
-    if (task.status !== 'COMPLETED' && task.status !== 'FAILED') {
+    if ((task as any).status !== 'COMPLETED' && (task as any).status !== 'FAILED') {
       try {
         const updatedTask = await videoProjectService.syncVideoTaskStatus(taskId);
         return NextResponse.json(updatedTask);

@@ -3,7 +3,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 import { VideoTask } from '@prisma/client';
 
-interface VideoTaskWithEdit extends VideoTask {
+interface VideoTaskWithEdit extends Omit<VideoTask, 'isEdited' | 'originalTaskId'> {
   isEdited?: boolean;
   originalTaskId?: string | null;
 }
