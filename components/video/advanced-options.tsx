@@ -1,18 +1,30 @@
-import { useState } from 'react';
+import { useState } from "react";
+
+import { VideoQuality } from "@/lib/credit-service";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { VideoQuality } from '@/lib/credit-service';
 
 export interface AdvancedVideoOptions {
   quality: VideoQuality;
   hasAdvancedEffects: boolean;
   style?: string;
-  aspectRatio: '16:9' | '9:16' | '1:1';
+  aspectRatio: "16:9" | "9:16" | "1:1";
   seed?: number;
   audioUrl?: string;
 }
@@ -27,9 +39,9 @@ interface AdvancedOptionsProps {
 }
 
 const qualityLimits: Record<string, VideoQuality[]> = {
-  starter: ['720p'],
-  pro: ['720p', '1080p'],
-  business: ['720p', '1080p', '4K']
+  starter: ["720p"],
+  pro: ["720p", "1080p"],
+  business: ["720p", "1080p", "4K"],
 };
 
 export function AdvancedOptions({
@@ -38,31 +50,31 @@ export function AdvancedOptions({
   availableStyles,
   showCreditImpact = true,
   disabled = false,
-  subscriptionTier = 'pro'
+  subscriptionTier = "pro",
 }: AdvancedOptionsProps) {
   const [isOpen, setIsOpen] = useState<string | false>("quality-options");
-  
+
   const handleQualityChange = (quality: VideoQuality) => {
     onChange({ ...options, quality });
   };
-  
+
   const handleEffectsToggle = (checked: boolean) => {
     onChange({ ...options, hasAdvancedEffects: checked });
   };
-  
+
   const handleStyleChange = (style: string) => {
     onChange({ ...options, style });
   };
-  
-  const handleAspectRatioChange = (aspectRatio: '16:9' | '9:16' | '1:1') => {
+
+  const handleAspectRatioChange = (aspectRatio: "16:9" | "9:16" | "1:1") => {
     onChange({ ...options, aspectRatio });
   };
-  
+
   const handleSeedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const seed = parseInt(event.target.value);
     onChange({ ...options, seed: isNaN(seed) ? undefined : seed });
   };
-  
+
   const handleAudioUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange({ ...options, audioUrl: event.target.value });
   };
@@ -70,15 +82,15 @@ export function AdvancedOptions({
   // Calculate quality multiplier for display
   const getQualityMultiplier = (quality: VideoQuality): number => {
     const multipliers: Record<VideoQuality, number> = {
-      '720p': 1.0,
-      '1080p': 1.5,
-      '4K': 2.5
+      "720p": 1.0,
+      "1080p": 1.5,
+      "4K": 2.5,
     };
     return multipliers[quality];
   };
 
   // Filter available qualities based on subscription tier
-  const availableQualities = qualityLimits[subscriptionTier] || ['720p'];
+  const availableQualities = qualityLimits[subscriptionTier] || ["720p"];
 
   return (
     <Card className="w-full">
@@ -97,7 +109,9 @@ export function AdvancedOptions({
                   <Label>Quality</Label>
                   <Select
                     value={options.quality}
-                    onValueChange={(value) => handleQualityChange(value as VideoQuality)}
+                    onValueChange={(value) =>
+                      handleQualityChange(value as VideoQuality)
+                    }
                     disabled={disabled}
                   >
                     <SelectTrigger>
@@ -106,7 +120,9 @@ export function AdvancedOptions({
                     <SelectContent>
                       {availableQualities.map((quality) => (
                         <SelectItem key={quality} value={quality}>
-                          {quality} {showCreditImpact && `(${getQualityMultiplier(quality as VideoQuality)}x credits)`}
+                          {quality}{" "}
+                          {showCreditImpact &&
+                            `(${getQualityMultiplier(quality as VideoQuality)}x credits)`}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -117,7 +133,9 @@ export function AdvancedOptions({
                   <Label>Aspect Ratio</Label>
                   <Select
                     value={options.aspectRatio}
-                    onValueChange={(value) => handleAspectRatioChange(value as '16:9' | '9:16' | '1:1')}
+                    onValueChange={(value) =>
+                      handleAspectRatioChange(value as "16:9" | "9:16" | "1:1")
+                    }
                     disabled={disabled}
                   >
                     <SelectTrigger>
@@ -141,7 +159,7 @@ export function AdvancedOptions({
                 <div className="space-y-2">
                   <Label>Video Style</Label>
                   <Select
-                    value={options.style || ''}
+                    value={options.style || ""}
                     onValueChange={handleStyleChange}
                     disabled={disabled}
                   >
@@ -151,7 +169,9 @@ export function AdvancedOptions({
                     <SelectContent>
                       <SelectItem value="">Default</SelectItem>
                       {availableStyles.map((style) => (
-                        <SelectItem key={style} value={style}>{style}</SelectItem>
+                        <SelectItem key={style} value={style}>
+                          {style}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -193,14 +213,16 @@ export function AdvancedOptions({
                     id="seed"
                     type="number"
                     placeholder="Random seed"
-                    value={options.seed || ''}
+                    value={options.seed || ""}
                     onChange={handleSeedChange}
                     disabled={disabled}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="audio-url">Background Audio URL (Optional)</Label>
+                  <Label htmlFor="audio-url">
+                    Background Audio URL (Optional)
+                  </Label>
                   <p className="text-sm text-muted-foreground">
                     Provide a URL to an audio file to use as background music
                   </p>
@@ -208,7 +230,7 @@ export function AdvancedOptions({
                     id="audio-url"
                     type="text"
                     placeholder="https://example.com/audio.mp3"
-                    value={options.audioUrl || ''}
+                    value={options.audioUrl || ""}
                     onChange={handleAudioUrlChange}
                     disabled={disabled}
                   />
@@ -220,4 +242,4 @@ export function AdvancedOptions({
       </CardContent>
     </Card>
   );
-} 
+}

@@ -1,11 +1,19 @@
+import Link from "next/link";
+import { ArrowRight, CreditCard, Film, Settings, Video } from "lucide-react";
+
 import { getCurrentUser } from "@/lib/session";
 import { constructMetadata } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { EmptyPlaceholder } from "@/components/shared/empty-placeholder";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import Link from "next/link";
-import { ArrowRight, Video, CreditCard, Settings, Film } from "lucide-react";
 
 export const metadata = constructMetadata({
   title: "Dashboard – SaaS Starter",
@@ -21,16 +29,18 @@ export default async function DashboardPage() {
         heading="Dashboard"
         text={`Welcome back, ${user?.name || "User"}. What would you like to do today?`}
       />
-      
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Video Projects</CardTitle>
-            <Video className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">
+              Video Projects
+            </CardTitle>
+            <Video className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Create Videos</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               Create and manage your video projects
             </p>
           </CardContent>
@@ -38,20 +48,20 @@ export default async function DashboardPage() {
             <Link href="/dashboard/video-projects" className="w-full">
               <Button className="w-full">
                 Go to Video Projects
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 size-4" />
               </Button>
             </Link>
           </CardFooter>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Video Library</CardTitle>
-            <Film className="h-4 w-4 text-muted-foreground" />
+            <Film className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Browse Videos</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               View and manage your generated videos
             </p>
           </CardContent>
@@ -59,20 +69,20 @@ export default async function DashboardPage() {
             <Link href="/dashboard/video-library" className="w-full">
               <Button variant="outline" className="w-full">
                 Go to Video Library
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 size-4" />
               </Button>
             </Link>
           </CardFooter>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Credits</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <CreditCard className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Manage Credits</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               View your credit balance and usage
             </p>
           </CardContent>
@@ -80,20 +90,20 @@ export default async function DashboardPage() {
             <Link href="/dashboard/billing" className="w-full">
               <Button variant="outline" className="w-full">
                 Go to Billing
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 size-4" />
               </Button>
             </Link>
           </CardFooter>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Account</CardTitle>
-            <Settings className="h-4 w-4 text-muted-foreground" />
+            <Settings className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Settings</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               Manage your account settings and preferences
             </p>
           </CardContent>
@@ -101,7 +111,7 @@ export default async function DashboardPage() {
             <Link href="/dashboard/settings" className="w-full">
               <Button variant="outline" className="w-full">
                 Go to Settings
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 size-4" />
               </Button>
             </Link>
           </CardFooter>

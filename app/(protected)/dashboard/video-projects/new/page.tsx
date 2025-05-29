@@ -2,13 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
 
 export default function NewVideoProjectPage() {
   const [name, setName] = useState("");
@@ -21,7 +29,7 @@ export default function NewVideoProjectPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       toast({
         title: "Error",
@@ -30,9 +38,9 @@ export default function NewVideoProjectPage() {
       });
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const response = await fetch("/api/video-projects", {
         method: "POST",
@@ -46,19 +54,19 @@ export default function NewVideoProjectPage() {
           videoScript,
         }),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Failed to create project");
       }
-      
+
       const project = await response.json();
-      
+
       toast({
         title: "Success",
         description: "Project created successfully",
       });
-      
+
       // Navigate to the project page
       router.push(`/dashboard/video-projects/${project.id}`);
     } catch (error: any) {
@@ -81,19 +89,19 @@ export default function NewVideoProjectPage() {
           className="gap-1"
           onClick={() => router.push("/dashboard/video-projects")}
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="size-4" />
           Back to Projects
         </Button>
       </div>
-      
-      <Card className="max-w-3xl mx-auto">
+
+      <Card className="mx-auto max-w-3xl">
         <CardHeader>
           <CardTitle>Create New Video Project</CardTitle>
           <CardDescription>
             Set up your project details before generating videos
           </CardDescription>
         </CardHeader>
-        
+
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
             <div className="space-y-2">
@@ -106,7 +114,7 @@ export default function NewVideoProjectPage() {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
@@ -117,7 +125,7 @@ export default function NewVideoProjectPage() {
                 rows={3}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="videoSubject">Video Subject</Label>
               <Input
@@ -127,7 +135,7 @@ export default function NewVideoProjectPage() {
                 onChange={(e) => setVideoSubject(e.target.value)}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="videoScript">Video Script Template</Label>
               <Textarea
@@ -139,7 +147,7 @@ export default function NewVideoProjectPage() {
               />
             </div>
           </CardContent>
-          
+
           <CardFooter className="flex justify-between">
             <Button
               type="button"
@@ -151,12 +159,12 @@ export default function NewVideoProjectPage() {
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 size-4 animate-spin" />
                   Creating...
                 </>
               ) : (
                 <>
-                  <Save className="mr-2 h-4 w-4" />
+                  <Save className="mr-2 size-4" />
                   Create Project
                 </>
               )}
@@ -166,4 +174,4 @@ export default function NewVideoProjectPage() {
       </Card>
     </div>
   );
-} 
+}

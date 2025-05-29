@@ -1,16 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect, Suspense } from 'react';
-import { DashboardHeader } from '@/components/dashboard/header';
-import { VideoAnalytics } from '@/components/dashboard/analytics/video-analytics';
-import { UsageSummary } from '@/components/dashboard/analytics/usage-summary';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, ChevronDown } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { ChevronDown, Search } from "lucide-react";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UsageSummary } from "@/components/dashboard/analytics/usage-summary";
+import { VideoAnalytics } from "@/components/dashboard/analytics/video-analytics";
+import { DashboardHeader } from "@/components/dashboard/header";
 
 interface VideoProject {
   id: string;
@@ -31,75 +38,81 @@ interface VideoTask {
 
 function AnalyticsContent() {
   const searchParams = useSearchParams();
-  const videoIdFromUrl = searchParams.get('video');
-  
-  const [activeTab, setActiveTab] = useState<string>('overview');
+  const videoIdFromUrl = searchParams.get("video");
+
+  const [activeTab, setActiveTab] = useState<string>("overview");
   const [isLoading, setIsLoading] = useState(true);
   const [projects, setProjects] = useState<VideoProject[]>([]);
   const [videos, setVideos] = useState<VideoTask[]>([]);
-  const [selectedProject, setSelectedProject] = useState<string>('all');
-  const [selectedVideo, setSelectedVideo] = useState<string | null>(videoIdFromUrl);
-  const [searchQuery, setSearchQuery] = useState('');
-  
+  const [selectedProject, setSelectedProject] = useState<string>("all");
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(
+    videoIdFromUrl,
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Fetch projects and videos
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Fetch projects
-        const projectsResponse = await fetch('/api/projects');
+        const projectsResponse = await fetch("/api/projects");
         const projectsData = await projectsResponse.json();
         setProjects(projectsData);
-        
+
         // Fetch videos
-        const videosResponse = await fetch('/api/video-tasks');
+        const videosResponse = await fetch("/api/video-tasks");
         const videosData = await videosResponse.json();
         setVideos(videosData);
-        
+
         // Set default selected video to first one if not specified in URL
         if (videosData.length > 0 && !selectedVideo) {
           setSelectedVideo(videosData[0].id);
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
-  
+
   // Update active tab when a video is selected
   useEffect(() => {
     if (selectedVideo) {
-      setActiveTab('videos');
+      setActiveTab("videos");
     }
   }, [selectedVideo]);
-  
+
   // Filter videos by project and search query
   const filteredVideos = videos.filter((video) => {
-    const matchesProject = selectedProject === 'all' || video.projectId === selectedProject;
-    const matchesSearch = !searchQuery || 
-      (video.videoSettings.prompt && 
-      video.videoSettings.prompt.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+    const matchesProject =
+      selectedProject === "all" || video.projectId === selectedProject;
+    const matchesSearch =
+      !searchQuery ||
+      (video.videoSettings.prompt &&
+        video.videoSettings.prompt
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()));
+
     return matchesProject && matchesSearch;
   });
-  
+
   // Get video title
   const getVideoTitle = (video: VideoTask) => {
     return video.videoSettings.prompt || `Video ${video.id.substring(0, 8)}`;
   };
-  
+
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -109,10 +122,10 @@ function AnalyticsContent() {
         heading="Analytics"
         text="Track your video performance with engagement metrics and insights."
       />
-      
-      <Tabs 
-        defaultValue="overview" 
-        value={activeTab} 
+
+      <Tabs
+        defaultValue="overview"
+        value={activeTab}
         onValueChange={setActiveTab}
         className="mb-6"
       >
@@ -120,17 +133,17 @@ function AnalyticsContent() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="videos">Video Analytics</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="overview" className="mt-6">
           <UsageSummary />
         </TabsContent>
-        
+
         <TabsContent value="videos" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
             {/* Sidebar */}
-            <div className="md:col-span-1 space-y-4">
+            <div className="space-y-4 md:col-span-1">
               <div className="flex items-center gap-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
+                <Search className="size-4 text-muted-foreground" />
                 <Input
                   placeholder="Search videos..."
                   value={searchQuery}
@@ -138,9 +151,9 @@ function AnalyticsContent() {
                   className="h-9"
                 />
               </div>
-              
-              <Select 
-                value={selectedProject} 
+
+              <Select
+                value={selectedProject}
                 onValueChange={setSelectedProject}
               >
                 <SelectTrigger className="w-full">
@@ -155,12 +168,12 @@ function AnalyticsContent() {
                   ))}
                 </SelectContent>
               </Select>
-              
+
               <Card>
                 <CardHeader className="py-4">
                   <CardTitle className="text-sm font-medium">Videos</CardTitle>
                 </CardHeader>
-                <CardContent className="py-0 px-0">
+                <CardContent className="p-0">
                   {isLoading ? (
                     <div className="space-y-3 p-4">
                       <Skeleton className="h-10 w-full" />
@@ -168,7 +181,7 @@ function AnalyticsContent() {
                       <Skeleton className="h-10 w-full" />
                     </div>
                   ) : filteredVideos.length === 0 ? (
-                    <div className="text-center py-6 text-sm text-muted-foreground">
+                    <div className="py-6 text-center text-sm text-muted-foreground">
                       No videos found
                     </div>
                   ) : (
@@ -176,16 +189,18 @@ function AnalyticsContent() {
                       {filteredVideos.map((video) => (
                         <button
                           key={video.id}
-                          className={`w-full text-left py-2 px-4 hover:bg-muted flex items-center gap-3 ${
-                            selectedVideo === video.id ? 'bg-muted font-medium' : ''
+                          className={`flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-muted ${
+                            selectedVideo === video.id
+                              ? "bg-muted font-medium"
+                              : ""
                           }`}
                           onClick={() => setSelectedVideo(video.id)}
                         >
                           {video.thumbnailUrl && (
-                            <img 
-                              src={video.thumbnailUrl} 
+                            <img
+                              src={video.thumbnailUrl}
                               alt={getVideoTitle(video)}
-                              className="w-10 h-10 object-cover rounded"
+                              className="size-10 rounded object-cover"
                             />
                           )}
                           <div className="overflow-hidden">
@@ -203,13 +218,13 @@ function AnalyticsContent() {
                 </CardContent>
               </Card>
             </div>
-            
+
             {/* Main Content */}
             <div className="md:col-span-3">
               {isLoading ? (
                 <div className="space-y-4">
                   <Skeleton className="h-8 w-64" />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <Skeleton className="h-32" />
                     <Skeleton className="h-32" />
                     <Skeleton className="h-32" />
@@ -241,4 +256,4 @@ export default function AnalyticsPage() {
       <AnalyticsContent />
     </Suspense>
   );
-} 
+}

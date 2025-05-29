@@ -1,1 +1,1 @@
-export default { test: { environment: "jsdom" } }
+export default { test: { environment: "jsdom" } };

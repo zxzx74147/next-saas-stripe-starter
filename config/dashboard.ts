@@ -13,9 +13,9 @@ export const sidebarLinks: SidebarNavItem[] = [
         authorizeOnly: UserRole.ADMIN,
       },
       { href: "/dashboard", icon: "dashboard", title: "Dashboard" },
-      { 
+      {
         href: "/dashboard/video-projects",
-        icon: "media", 
+        icon: "media",
         title: "Video Projects",
         authorizeOnly: UserRole.USER,
       },

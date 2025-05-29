@@ -1,15 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Download,
+  Edit,
+  Film,
+  Filter,
+  MoreVertical,
+  Play,
+  Search,
+  Share2,
+  Sliders,
+  Trash2,
+} from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -18,22 +37,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Film,
-  Calendar,
-  Search,
-  Clock,
-  Filter,
-  Sliders,
-  Download,
-  Share2,
-  MoreVertical,
-  Trash2,
-  Edit,
-  Play,
-  CheckCircle,
-  AlertCircle
-} from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 
 interface VideoTask {
   id: string;
@@ -59,21 +73,21 @@ export default function VideoLibraryPage() {
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("all");
-  
+
   const router = useRouter();
   const { toast } = useToast();
-  
+
   // Fetch all video tasks from all projects
   useEffect(() => {
     const fetchVideos = async () => {
       try {
         setLoading(true);
         const response = await fetch("/api/video-library");
-        
+
         if (!response.ok) {
           throw new Error("Failed to fetch videos");
         }
-        
+
         const data = await response.json();
         setVideos(data);
         setFilteredVideos(data);
@@ -88,31 +102,31 @@ export default function VideoLibraryPage() {
         setLoading(false);
       }
     };
-    
+
     fetchVideos();
   }, [toast]);
-  
+
   // Apply filters
   useEffect(() => {
     let result = [...videos];
-    
+
     // Apply search filter
     if (searchQuery) {
-      result = result.filter(video => 
-        video.projectName.toLowerCase().includes(searchQuery.toLowerCase())
+      result = result.filter((video) =>
+        video.projectName.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
-    
+
     // Apply status filter
     if (statusFilter !== "all") {
-      result = result.filter(video => video.status === statusFilter);
+      result = result.filter((video) => video.status === statusFilter);
     }
-    
+
     // Apply date filter
     if (dateFilter !== "all") {
       const now = new Date();
       const pastDate = new Date();
-      
+
       switch (dateFilter) {
         case "today":
           pastDate.setDate(now.getDate() - 1);
@@ -127,85 +141,106 @@ export default function VideoLibraryPage() {
           pastDate.setFullYear(now.getFullYear() - 1);
           break;
       }
-      
-      result = result.filter(video => new Date(video.createdAt) >= pastDate);
+
+      result = result.filter((video) => new Date(video.createdAt) >= pastDate);
     }
-    
+
     // Apply tab filter
     if (activeTab !== "all") {
       if (activeTab === "completed") {
-        result = result.filter(video => video.status === "COMPLETED");
+        result = result.filter((video) => video.status === "COMPLETED");
       } else if (activeTab === "processing") {
-        result = result.filter(video => 
-          video.status === "PENDING" || video.status === "PROCESSING"
+        result = result.filter(
+          (video) =>
+            video.status === "PENDING" || video.status === "PROCESSING",
         );
       } else if (activeTab === "failed") {
-        result = result.filter(video => video.status === "FAILED");
+        result = result.filter((video) => video.status === "FAILED");
       }
     }
-    
+
     setFilteredVideos(result);
   }, [videos, searchQuery, statusFilter, dateFilter, activeTab]);
-  
+
   // Toggle video selection
   const toggleVideoSelection = (videoId: string) => {
-    setSelectedVideos(prev => 
+    setSelectedVideos((prev) =>
       prev.includes(videoId)
-        ? prev.filter(id => id !== videoId)
-        : [...prev, videoId]
+        ? prev.filter((id) => id !== videoId)
+        : [...prev, videoId],
     );
   };
-  
+
   // Select all videos
   const selectAllVideos = () => {
     if (selectedVideos.length === filteredVideos.length) {
       setSelectedVideos([]);
     } else {
-      setSelectedVideos(filteredVideos.map(video => video.id));
+      setSelectedVideos(filteredVideos.map((video) => video.id));
     }
   };
-  
+
   // Navigate to video details
   const navigateToVideo = (videoId: string, projectId: string) => {
     router.push(`/dashboard/video-projects/${projectId}?taskId=${videoId}`);
   };
-  
+
   // Get status badge
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PENDING":
-        return <Badge variant="outline" className="flex items-center gap-1"><Clock className="w-3 h-3" /> Pending</Badge>;
+        return (
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Clock className="size-3" /> Pending
+          </Badge>
+        );
       case "PROCESSING":
-        return <Badge variant="secondary" className="flex items-center gap-1"><Clock className="w-3 h-3" /> Processing</Badge>;
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <Clock className="size-3" /> Processing
+          </Badge>
+        );
       case "COMPLETED":
-        return <Badge className="bg-green-500 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Completed</Badge>;
+        return (
+          <Badge className="flex items-center gap-1 bg-green-500">
+            <CheckCircle className="size-3" /> Completed
+          </Badge>
+        );
       case "FAILED":
-        return <Badge variant="destructive" className="flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Failed</Badge>;
+        return (
+          <Badge variant="destructive" className="flex items-center gap-1">
+            <AlertCircle className="size-3" /> Failed
+          </Badge>
+        );
       default:
         return <Badge>{status}</Badge>;
     }
   };
-  
+
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   };
-  
+
   // Delete selected videos
   const deleteSelectedVideos = async () => {
     if (selectedVideos.length === 0) return;
-    
-    if (!window.confirm(`Are you sure you want to delete ${selectedVideos.length} video(s)? This action cannot be undone.`)) {
+
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${selectedVideos.length} video(s)? This action cannot be undone.`,
+      )
+    ) {
       return;
     }
-    
+
     try {
       const response = await fetch("/api/video-library/batch", {
         method: "DELETE",
@@ -214,15 +249,15 @@ export default function VideoLibraryPage() {
         },
         body: JSON.stringify({ videoIds: selectedVideos }),
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to delete videos");
       }
-      
+
       // Remove deleted videos from state
-      setVideos(videos.filter(video => !selectedVideos.includes(video.id)));
+      setVideos(videos.filter((video) => !selectedVideos.includes(video.id)));
       setSelectedVideos([]);
-      
+
       toast({
         title: "Success",
         description: `${selectedVideos.length} video(s) deleted successfully`,
@@ -236,20 +271,20 @@ export default function VideoLibraryPage() {
       });
     }
   };
-  
+
   if (loading) {
     return (
       <div className="container mx-auto py-10">
-        <div className="flex justify-center items-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <p>Loading your video library...</p>
         </div>
       </div>
     );
   }
-  
+
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-center">
+    <div className="container mx-auto space-y-6 py-6">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Video Library</h2>
           <p className="text-muted-foreground">
@@ -257,16 +292,16 @@ export default function VideoLibraryPage() {
           </p>
         </div>
         <Button onClick={() => router.push("/dashboard/video-projects")}>
-          <Film className="mr-2 h-4 w-4" />
+          <Film className="mr-2 size-4" />
           Video Projects
         </Button>
       </div>
-      
+
       <div className="space-y-4">
         {/* Filters and search */}
         <div className="grid gap-4 md:grid-cols-4">
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search videos..."
@@ -275,7 +310,7 @@ export default function VideoLibraryPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          
+
           <div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
@@ -290,7 +325,7 @@ export default function VideoLibraryPage() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <Select value={dateFilter} onValueChange={setDateFilter}>
               <SelectTrigger>
@@ -305,15 +340,20 @@ export default function VideoLibraryPage() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex items-center justify-end space-x-2">
-            <Button variant="outline" size="sm" disabled={selectedVideos.length === 0} onClick={deleteSelectedVideos}>
-              <Trash2 className="mr-2 h-4 w-4" />
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={selectedVideos.length === 0}
+              onClick={deleteSelectedVideos}
+            >
+              <Trash2 className="mr-2 size-4" />
               Delete Selected
             </Button>
           </div>
         </div>
-        
+
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -323,139 +363,171 @@ export default function VideoLibraryPage() {
             <TabsTrigger value="failed">Failed</TabsTrigger>
           </TabsList>
         </Tabs>
-        
+
         {/* Video grid */}
         {filteredVideos.length === 0 ? (
-          <div className="text-center py-12">
-            <Film className="h-12 w-12 mx-auto text-muted-foreground" />
+          <div className="py-12 text-center">
+            <Film className="mx-auto size-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">No videos found</h3>
-            <p className="text-muted-foreground mt-1">
-              {activeTab === "all" && searchQuery === "" && statusFilter === "all" && dateFilter === "all"
+            <p className="mt-1 text-muted-foreground">
+              {activeTab === "all" &&
+              searchQuery === "" &&
+              statusFilter === "all" &&
+              dateFilter === "all"
                 ? "You haven't generated any videos yet."
                 : "No videos match your current filters."}
             </p>
-            {activeTab === "all" && searchQuery === "" && statusFilter === "all" && dateFilter === "all" && (
-              <Button
-                onClick={() => router.push("/dashboard/video-projects")}
-                className="mt-4"
-              >
-                Create Your First Video
-              </Button>
-            )}
+            {activeTab === "all" &&
+              searchQuery === "" &&
+              statusFilter === "all" &&
+              dateFilter === "all" && (
+                <Button
+                  onClick={() => router.push("/dashboard/video-projects")}
+                  className="mt-4"
+                >
+                  Create Your First Video
+                </Button>
+              )}
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredVideos.map((video) => (
               <Card key={video.id} className="overflow-hidden">
                 <CardHeader className="p-0">
-                  <div className="relative aspect-video bg-muted group cursor-pointer" onClick={() => navigateToVideo(video.id, video.projectId)}>
+                  <div
+                    className="group relative aspect-video cursor-pointer bg-muted"
+                    onClick={() => navigateToVideo(video.id, video.projectId)}
+                  >
                     {video.thumbnailUrl ? (
                       <img
                         src={video.thumbnailUrl}
                         alt={`Thumbnail for ${video.projectName}`}
-                        className="object-cover w-full h-full"
+                        className="size-full object-cover"
                       />
                     ) : (
-                      <div className="flex items-center justify-center w-full h-full">
-                        <Film className="h-12 w-12 text-muted-foreground" />
+                      <div className="flex size-full items-center justify-center">
+                        <Film className="size-12 text-muted-foreground" />
                       </div>
                     )}
-                    
+
                     {/* Status overlay */}
                     {video.status !== "COMPLETED" && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                         {video.status === "PROCESSING" && (
                           <div className="text-center text-white">
-                            <Clock className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+                            <Clock className="mx-auto mb-2 size-8 animate-pulse" />
                             <p>Processing ({video.progress}%)</p>
                           </div>
                         )}
                         {video.status === "PENDING" && (
                           <div className="text-center text-white">
-                            <Clock className="h-8 w-8 mx-auto mb-2" />
+                            <Clock className="mx-auto mb-2 size-8" />
                             <p>Pending</p>
                           </div>
                         )}
                         {video.status === "FAILED" && (
                           <div className="text-center text-white">
-                            <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                            <AlertCircle className="mx-auto mb-2 size-8" />
                             <p>Failed</p>
                           </div>
                         )}
                       </div>
                     )}
-                    
+
                     {/* Play button overlay for completed videos */}
                     {video.status === "COMPLETED" && (
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
                         <div className="rounded-full bg-white/90 p-3">
-                          <Play className="h-6 w-6 text-primary" />
+                          <Play className="size-6 text-primary" />
                         </div>
                       </div>
                     )}
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-semibold truncate" title={video.projectName}>
+                      <h3
+                        className="truncate font-semibold"
+                        title={video.projectName}
+                      >
                         {video.projectName}
                       </h3>
-                      <p className="text-muted-foreground text-sm">
+                      <p className="text-sm text-muted-foreground">
                         {formatDate(video.createdAt)}
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         checked={selectedVideos.includes(video.id)}
                         onCheckedChange={() => toggleVideoSelection(video.id)}
                         onClick={(e) => e.stopPropagation()}
                       />
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                          >
+                            <MoreVertical className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => navigateToVideo(video.id, video.projectId)}>
-                            <Play className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem
+                            onClick={() =>
+                              navigateToVideo(video.id, video.projectId)
+                            }
+                          >
+                            <Play className="mr-2 size-4" />
                             <span>View</span>
                           </DropdownMenuItem>
                           {video.status === "COMPLETED" && (
                             <DropdownMenuItem>
-                              <Download className="mr-2 h-4 w-4" />
+                              <Download className="mr-2 size-4" />
                               <span>Download</span>
                             </DropdownMenuItem>
                           )}
                           {video.status === "COMPLETED" && (
                             <DropdownMenuItem>
-                              <Share2 className="mr-2 h-4 w-4" />
+                              <Share2 className="mr-2 size-4" />
                               <span>Share</span>
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem onClick={() => router.push(`/dashboard/video-projects/${video.projectId}/edit?taskId=${video.id}`)}>
-                            <Edit className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(
+                                `/dashboard/video-projects/${video.projectId}/edit?taskId=${video.id}`,
+                              )
+                            }
+                          >
+                            <Edit className="mr-2 size-4" />
                             <span>Edit</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            if (window.confirm("Are you sure you want to delete this video?")) {
-                              // Delete logic would go here
-                            }
-                          }}>
-                            <Trash2 className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  "Are you sure you want to delete this video?",
+                                )
+                              ) {
+                                // Delete logic would go here
+                              }
+                            }}
+                          >
+                            <Trash2 className="mr-2 size-4" />
                             <span>Delete</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                   </div>
-                  
+
                   <div className="mt-2">
                     {getStatusBadge(video.status)}
-                    <div className="flex items-center mt-2 text-sm text-muted-foreground">
+                    <div className="mt-2 flex items-center text-sm text-muted-foreground">
                       <span>{video.creditsCost} credits</span>
                     </div>
                   </div>
@@ -467,4 +539,4 @@ export default function VideoLibraryPage() {
       </div>
     </div>
   );
-} 
+}

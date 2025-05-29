@@ -1,5 +1,4 @@
 #!/usr/bin/env ts-node
-
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -57,7 +56,7 @@ async function main() {
       maxDuration: 60, // 60 seconds maximum
       maxQuality: "4K",
       monthlyCredits: 1000,
-      overageRate: 0.10, // $0.10 per credit
+      overageRate: 0.1, // $0.10 per credit
       overageCap: 100, // $100 maximum overage per month
       features: {
         demoAccess: true,
@@ -80,4 +79,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-  }); 
+  });

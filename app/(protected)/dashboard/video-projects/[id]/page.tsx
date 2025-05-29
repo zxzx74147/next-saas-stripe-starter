@@ -1,29 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle,
+  Clock,
+  Edit,
+  Film,
+  Loader2,
+  Play,
+  Save,
+  Settings,
+  Trash2,
+} from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  ArrowLeft, 
-  Play, 
-  Film, 
-  Settings, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle,
-  Edit, 
-  Save,
-  Loader2, 
-  Trash2
-} from "lucide-react";
-import { format } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
 import { ProjectTaskDashboard } from "@/components/video/project-task-dashboard";
 
 interface VideoTask {
@@ -50,7 +58,11 @@ interface VideoProject {
   videoTasks: VideoTask[];
 }
 
-export default function VideoProjectPage({ params }: { params: { id: string } }) {
+export default function VideoProjectPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const [project, setProject] = useState<VideoProject | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -61,7 +73,7 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
     videoSubject: "",
     videoScript: "",
   });
-  
+
   const router = useRouter();
   const { toast } = useToast();
   const projectId = params.id;
@@ -72,14 +84,14 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
       try {
         setLoading(true);
         const response = await fetch(`/api/video-projects/${projectId}`);
-        
+
         if (!response.ok) {
           throw new Error("Failed to fetch project");
         }
-        
+
         const data = await response.json();
         setProject(data);
-        
+
         // Initialize edit form
         setEditForm({
           name: data.name || "",
@@ -103,7 +115,9 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
   }, [projectId, toast]);
 
   // Handle edit form changes
-  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleEditFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setEditForm((prev) => ({
       ...prev,
@@ -140,12 +154,12 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
 
       const updatedProject = await response.json();
       setProject(updatedProject);
-      
+
       toast({
         title: "Success",
         description: "Project updated successfully",
       });
-      
+
       setIsEditing(false);
     } catch (error: any) {
       console.error("Error updating project:", error);
@@ -161,7 +175,11 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
 
   // Delete project
   const handleDeleteProject = async () => {
-    if (!window.confirm("Are you sure you want to delete this project? This action cannot be undone.")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this project? This action cannot be undone.",
+      )
+    ) {
       return;
     }
 
@@ -201,7 +219,11 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
       case "COMPLETED":
         return <Badge className="bg-green-500">Completed</Badge>;
       case "ARCHIVED":
-        return <Badge variant="outline" className="text-muted-foreground">Archived</Badge>;
+        return (
+          <Badge variant="outline" className="text-muted-foreground">
+            Archived
+          </Badge>
+        );
       default:
         return <Badge>{status}</Badge>;
     }
@@ -211,13 +233,13 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
   const getTaskStatusIcon = (status: string) => {
     switch (status) {
       case "PENDING":
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Clock className="size-4 text-yellow-500" />;
       case "PROCESSING":
-        return <Clock className="h-4 w-4 text-blue-500" />;
+        return <Clock className="size-4 text-blue-500" />;
       case "COMPLETED":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="size-4 text-green-500" />;
       case "FAILED":
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="size-4 text-red-500" />;
       default:
         return null;
     }
@@ -236,23 +258,23 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
   // Update task in project state
   const updateTask = (updatedTask: VideoTask) => {
     if (!project) return;
-    
+
     // Create a new tasks array with the updated task
-    const updatedTasks = project.videoTasks.map(task => 
-      task.id === updatedTask.id ? updatedTask : task
+    const updatedTasks = project.videoTasks.map((task) =>
+      task.id === updatedTask.id ? updatedTask : task,
     );
-    
+
     // Update the project state
     setProject({
       ...project,
-      videoTasks: updatedTasks
+      videoTasks: updatedTasks,
     });
   };
 
   if (loading) {
     return (
       <div className="container mx-auto py-6">
-        <div className="flex justify-center items-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <p>Loading project details...</p>
         </div>
       </div>
@@ -264,9 +286,14 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
       <div className="container mx-auto py-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold">Project Not Found</h2>
-          <p className="text-muted-foreground mt-2">The requested project could not be found.</p>
-          <Button onClick={() => router.push("/dashboard/video-projects")} className="mt-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
+          <p className="mt-2 text-muted-foreground">
+            The requested project could not be found.
+          </p>
+          <Button
+            onClick={() => router.push("/dashboard/video-projects")}
+            className="mt-4"
+          >
+            <ArrowLeft className="mr-2 size-4" />
             Back to Projects
           </Button>
         </div>
@@ -275,31 +302,35 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto space-y-6 py-6">
       {/* Header with back button */}
-      <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <Button variant="outline" size="sm" onClick={() => router.push("/dashboard/video-projects")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/dashboard/video-projects")}
+          >
+            <ArrowLeft className="mr-2 size-4" />
             Back to Projects
           </Button>
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm" onClick={handleDeleteProject}>
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className="mr-2 size-4" />
             Delete Project
           </Button>
           {!isEditing ? (
             <Button size="sm" onClick={() => setIsEditing(true)}>
-              <Edit className="mr-2 h-4 w-4" />
+              <Edit className="mr-2 size-4" />
               Edit Details
             </Button>
           ) : (
             <Button size="sm" onClick={handleSaveProject} disabled={isSaving}>
               {isSaving ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 size-4 animate-spin" />
               ) : (
-                <Save className="mr-2 h-4 w-4" />
+                <Save className="mr-2 size-4" />
               )}
               Save Changes
             </Button>
@@ -324,14 +355,14 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
                   />
                 </div>
               ) : (
-                <div className="flex justify-between items-start">
+                <div className="flex items-start justify-between">
                   <CardTitle className="text-2xl">{project.name}</CardTitle>
                   {getStatusBadge(project.status)}
                 </div>
               )}
 
               {isEditing ? (
-                <div className="space-y-2 mt-2">
+                <div className="mt-2 space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
@@ -348,8 +379,8 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
                 )
               )}
             </CardHeader>
-            
-            <CardContent className="text-sm pb-3">
+
+            <CardContent className="pb-3 text-sm">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-muted-foreground">Created</p>
@@ -365,7 +396,7 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
         </div>
 
         {/* Project Content Section */}
-        <div className="md:col-span-3 space-y-6">
+        <div className="space-y-6 md:col-span-3">
           {isEditing ? (
             <Card>
               <CardHeader>
@@ -398,8 +429,8 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
           ) : (
             <>
               {/* Project Task Dashboard */}
-              <ProjectTaskDashboard 
-                project={project} 
+              <ProjectTaskDashboard
+                project={project}
                 onTaskUpdate={updateTask}
                 onCreateVideo={handleCreateVideo}
               />
@@ -409,4 +440,4 @@ export default function VideoProjectPage({ params }: { params: { id: string } })
       </div>
     </div>
   );
-} 
+}

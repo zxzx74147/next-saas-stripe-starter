@@ -14,7 +14,7 @@ export default function Testimonials() {
             worldwide."
         />
 
-        <div className="column-1 gap-5 space-y-5 md:columns-2 lg:columns-3 ">
+        <div className="column-1 gap-5 space-y-5 md:columns-2 lg:columns-3">
           {testimonials.map((item) => (
             <div className="break-inside-avoid" key={item.name}>
               <div className="relative rounded-xl border bg-muted/25">

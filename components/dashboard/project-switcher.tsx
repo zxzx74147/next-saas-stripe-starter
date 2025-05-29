@@ -56,10 +56,7 @@ export default function ProjectSwitcher({
           >
             <div className="flex items-center space-x-3 pr-2">
               <div
-                className={cn(
-                  "size-3 shrink-0 rounded-full",
-                  selected.color,
-                )}
+                className={cn("size-3 shrink-0 rounded-full", selected.color)}
               />
               <div className="flex items-center space-x-3">
                 <span

@@ -1,5 +1,6 @@
-import { PrismaClient } from '@prisma/client';
-import * as creditService from './credit-service';
+import { PrismaClient } from "@prisma/client";
+
+import * as creditService from "./credit-service";
 
 const prisma = new PrismaClient();
 
@@ -10,11 +11,15 @@ export async function getUserCreditBalance(userId: string) {
   const creditBalance = await prisma.$queryRaw`
     SELECT * FROM user_credit_balances WHERE "userId" = ${userId}
   `;
-  
-  if (!creditBalance || !Array.isArray(creditBalance) || creditBalance.length === 0) {
+
+  if (
+    !creditBalance ||
+    !Array.isArray(creditBalance) ||
+    creditBalance.length === 0
+  ) {
     return null;
   }
-  
+
   return creditBalance[0];
 }
 
@@ -26,9 +31,9 @@ export async function initializeUserCredits(userId: string): Promise<void> {
   // Get user subscription info
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { 
-      stripePriceId: true
-    }
+    select: {
+      stripePriceId: true,
+    },
   });
 
   if (!user || !user.stripePriceId) {
@@ -37,21 +42,21 @@ export async function initializeUserCredits(userId: string): Promise<void> {
   }
 
   // Map Stripe price ID to subscription tier
-  let tier = 'starter'; // Default to starter tier
-  
+  let tier = "starter"; // Default to starter tier
+
   // This mapping would depend on your actual Stripe price IDs
   const stripePriceMapping: Record<string, string> = {
-    'price_pro_test': 'pro',
-    'price_business_test': 'business'
+    price_pro_test: "pro",
+    price_business_test: "business",
   };
-  
+
   tier = stripePriceMapping[user.stripePriceId] || tier;
-  
+
   // Get subscription config for the tier
   const config = await prisma.$queryRaw`
     SELECT * FROM subscription_configs WHERE tier = ${tier}
   `;
-  
+
   if (!config || !Array.isArray(config) || config.length === 0) {
     console.error(`Subscription configuration not found for tier: ${tier}`);
     return;
@@ -64,7 +69,11 @@ export async function initializeUserCredits(userId: string): Promise<void> {
     SELECT * FROM user_credit_balances WHERE "userId" = ${userId}
   `;
 
-  if (existingBalance && Array.isArray(existingBalance) && existingBalance.length > 0) {
+  if (
+    existingBalance &&
+    Array.isArray(existingBalance) &&
+    existingBalance.length > 0
+  ) {
     // Update monthly allocation (but keep current balance)
     await prisma.$executeRaw`
       UPDATE user_credit_balances 
@@ -76,8 +85,8 @@ export async function initializeUserCredits(userId: string): Promise<void> {
     await creditService.addCredits(
       userId,
       subscriptionConfig.monthlyCredits,
-      'MONTHLY_RESET',
-      'Initial subscription credits'
+      "MONTHLY_RESET",
+      "Initial subscription credits",
     );
   }
 }
@@ -101,40 +110,44 @@ export async function resetMonthlyCreditsForAllUsers(): Promise<{
     const users = await prisma.user.findMany({
       where: {
         stripeSubscriptionId: {
-          not: null
-        }
+          not: null,
+        },
       },
       select: {
         id: true,
-        stripePriceId: true
-      }
+        stripePriceId: true,
+      },
     });
 
-    console.log(`Processing ${users.length} subscribed users for monthly credit reset`);
+    console.log(
+      `Processing ${users.length} subscribed users for monthly credit reset`,
+    );
 
     for (const user of users) {
       processed++;
-      
+
       try {
         // Get the subscription tier
-        let tier = 'starter';
+        let tier = "starter";
         if (user.stripePriceId) {
           // This mapping would depend on your actual Stripe price IDs
           const stripePriceMapping: Record<string, string> = {
-            'price_pro_test': 'pro',
-            'price_business_test': 'business'
+            price_pro_test: "pro",
+            price_business_test: "business",
           };
-          
+
           tier = stripePriceMapping[user.stripePriceId] || tier;
         }
-        
+
         // Get subscription config for the tier
         const config = await prisma.$queryRaw`
           SELECT * FROM subscription_configs WHERE tier = ${tier}
         `;
-        
+
         if (!config || !Array.isArray(config) || config.length === 0) {
-          console.error(`Subscription configuration not found for tier: ${tier}`);
+          console.error(
+            `Subscription configuration not found for tier: ${tier}`,
+          );
           errors++;
           continue;
         }
@@ -145,10 +158,10 @@ export async function resetMonthlyCreditsForAllUsers(): Promise<{
         await creditService.addCredits(
           user.id,
           subscriptionConfig.monthlyCredits,
-          'MONTHLY_RESET',
-          'Monthly credit reset'
+          "MONTHLY_RESET",
+          "Monthly credit reset",
         );
-        
+
         updated++;
       } catch (error) {
         console.error(`Error resetting credits for user ${user.id}:`, error);
@@ -158,7 +171,7 @@ export async function resetMonthlyCreditsForAllUsers(): Promise<{
 
     return { processed, updated, errors };
   } catch (error) {
-    console.error('Error in resetMonthlyCreditsForAllUsers:', error);
+    console.error("Error in resetMonthlyCreditsForAllUsers:", error);
     return { processed, updated, errors: errors + 1 };
   }
 }
@@ -169,11 +182,11 @@ export async function resetMonthlyCreditsForAllUsers(): Promise<{
 export async function handleSubscriptionChange(
   userId: string,
   oldPriceId: string | null,
-  newPriceId: string
+  newPriceId: string,
 ): Promise<void> {
   // Initialize credits for the new subscription
   await initializeUserCredits(userId);
-  
+
   // Record the subscription change in the credit transaction history
   await prisma.$executeRaw`
     INSERT INTO credit_transactions ("id", "userId", "amount", "type", "description", "createdAt")
@@ -186,4 +199,4 @@ export async function handleSubscriptionChange(
       ${new Date()}
     )
   `;
-} 
+}

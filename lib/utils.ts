@@ -1,8 +1,8 @@
+import crypto from "crypto";
 import { Metadata } from "next";
 import { clsx, type ClassValue } from "clsx";
 import ms from "ms";
 import { twMerge } from "tailwind-merge";
-import crypto from 'crypto';
 
 import { env } from "@/env.mjs";
 import { siteConfig } from "@/config/site";
@@ -179,11 +179,13 @@ export const placeholderBlurhash =
 export async function hash(input: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(input);
-  
+
   // Use Web Crypto API for hashing
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
   return hashHex;
 }

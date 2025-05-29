@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
-import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -9,17 +9,14 @@ export async function GET(req: NextRequest) {
   try {
     // Get the user session
     const session = await auth();
-    
+
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     // Get the user ID
     const userId = session.user.id as string;
-    
+
     // Get all video tasks for the user's projects
     const videoTasks = await prisma.$queryRaw`
       SELECT 
@@ -44,13 +41,13 @@ export async function GET(req: NextRequest) {
       ORDER BY 
         vt."createdAt" DESC
     `;
-    
+
     return NextResponse.json(videoTasks);
   } catch (error: any) {
-    console.error('Error getting video library:', error);
+    console.error("Error getting video library:", error);
     return NextResponse.json(
-      { error: error.message || 'Failed to get video library' },
-      { status: 500 }
+      { error: error.message || "Failed to get video library" },
+      { status: 500 },
     );
   }
-} 
+}

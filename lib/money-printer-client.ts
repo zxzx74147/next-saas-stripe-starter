@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from "axios";
 
 /**
  * Interface for video generation parameters
@@ -6,10 +6,10 @@ import axios, { AxiosInstance } from 'axios';
 export interface VideoGenerationParams {
   prompt: string;
   duration: number; // in seconds
-  quality: '720p' | '1080p' | '4K';
+  quality: "720p" | "1080p" | "4K";
   hasAdvancedEffects?: boolean;
   style?: string;
-  aspectRatio?: '16:9' | '9:16' | '1:1';
+  aspectRatio?: "16:9" | "9:16" | "1:1";
   audioUrl?: string;
   seed?: number;
 }
@@ -19,7 +19,7 @@ export interface VideoGenerationParams {
  */
 export interface VideoGenerationResponse {
   taskId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: "pending" | "processing" | "completed" | "failed";
   estimatedTime?: number; // in seconds
 }
 
@@ -28,7 +28,7 @@ export interface VideoGenerationResponse {
  */
 export interface VideoTaskStatus {
   taskId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: "pending" | "processing" | "completed" | "failed";
   progress: number; // 0-100
   videoUrl?: string;
   error?: string;
@@ -46,30 +46,35 @@ interface TaskStatus {
  */
 export class MoneyPrinterClient {
   private client: AxiosInstance;
-  
-  constructor(baseUrl: string = process.env.MONEY_PRINTER_API_URL || 'http://localhost:8000') {
+
+  constructor(
+    baseUrl: string = process.env.MONEY_PRINTER_API_URL ||
+      "http://localhost:8000",
+  ) {
     this.client = axios.create({
       baseURL: baseUrl,
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.MONEY_PRINTER_API_KEY || ''}`
-      }
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.MONEY_PRINTER_API_KEY || ""}`,
+      },
     });
   }
-  
+
   /**
    * Generate a video based on the provided parameters
    */
-  async generateVideo(params: VideoGenerationParams): Promise<VideoGenerationResponse> {
+  async generateVideo(
+    params: VideoGenerationParams,
+  ): Promise<VideoGenerationResponse> {
     try {
-      const response = await this.client.post('/api/v1/generate', params);
+      const response = await this.client.post("/api/v1/generate", params);
       return response.data;
     } catch (error) {
-      console.error('Error generating video:', error);
+      console.error("Error generating video:", error);
       throw error;
     }
   }
-  
+
   /**
    * Get the status of a video generation task
    */
@@ -77,11 +82,11 @@ export class MoneyPrinterClient {
     // In a real implementation, this would call the Money Printer API
     // For testing purposes, we'll just return a mock response
     return {
-      status: 'processing',
-      progress: 50
+      status: "processing",
+      progress: 50,
     };
   }
-  
+
   /**
    * Cancel a video generation task
    */
@@ -90,20 +95,20 @@ export class MoneyPrinterClient {
       const response = await this.client.post(`/api/v1/tasks/${taskId}/cancel`);
       return response.data.success;
     } catch (error) {
-      console.error('Error canceling task:', error);
+      console.error("Error canceling task:", error);
       throw error;
     }
   }
-  
+
   /**
    * Get available video styles
    */
   async getAvailableStyles(): Promise<string[]> {
     try {
-      const response = await this.client.get('/api/v1/styles');
+      const response = await this.client.get("/api/v1/styles");
       return response.data.styles;
     } catch (error) {
-      console.error('Error getting available styles:', error);
+      console.error("Error getting available styles:", error);
       throw error;
     }
   }
@@ -112,4 +117,4 @@ export class MoneyPrinterClient {
 // Export a singleton instance
 export const moneyPrinterClient = new MoneyPrinterClient();
 
-export default moneyPrinterClient; 
+export default moneyPrinterClient;

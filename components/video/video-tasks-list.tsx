@@ -2,19 +2,27 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import {
+  AlertCircle,
+  CheckCircle,
+  ChevronRight,
+  Clock,
+  PlayCircle,
+  RefreshCw,
+} from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { RefreshCw, Clock, CheckCircle, AlertCircle, PlayCircle, ChevronRight } from "lucide-react";
 import { VideoTaskDetails } from "@/components/video/video-task-details";
 
 interface VideoTask {
@@ -35,10 +43,10 @@ interface VideoTasksListProps {
   onTaskStatusChange?: (updatedTask: VideoTask) => void;
 }
 
-export function VideoTasksList({ 
-  tasks, 
-  projectId, 
-  onTaskStatusChange 
+export function VideoTasksList({
+  tasks,
+  projectId,
+  onTaskStatusChange,
 }: VideoTasksListProps) {
   const [activeTab, setActiveTab] = useState("all");
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
@@ -46,14 +54,14 @@ export function VideoTasksList({
   const { toast } = useToast();
 
   // Filter tasks based on active tab
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter((task) => {
     if (activeTab === "all") return true;
     return task.status.toLowerCase() === activeTab.toLowerCase();
   });
 
   // Sort tasks by creation date (newest first)
   const sortedTasks = [...filteredTasks].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
   // Toggle expanded task
@@ -68,11 +76,11 @@ export function VideoTasksList({
   // Refresh tasks in processing state
   const refreshProcessingTasks = async () => {
     if (isRefreshing) return;
-    
+
     const processingTasks = tasks.filter(
-      task => task.status === "PENDING" || task.status === "PROCESSING"
+      (task) => task.status === "PENDING" || task.status === "PROCESSING",
     );
-    
+
     if (processingTasks.length === 0) {
       toast({
         title: "No tasks to refresh",
@@ -80,28 +88,28 @@ export function VideoTasksList({
       });
       return;
     }
-    
+
     setIsRefreshing(true);
-    
+
     try {
       // Refresh each processing task one by one
       for (const task of processingTasks) {
         const response = await fetch(
-          `/api/video-projects/${projectId}/tasks/${task.id}/status?sync=true`
+          `/api/video-projects/${projectId}/tasks/${task.id}/status?sync=true`,
         );
-        
+
         if (!response.ok) {
           throw new Error(`Failed to refresh task ${task.id}`);
         }
-        
+
         const updatedTask = await response.json();
-        
+
         // Notify parent component of the status change
         if (onTaskStatusChange) {
           onTaskStatusChange(updatedTask);
         }
       }
-      
+
       toast({
         title: "Success",
         description: `Refreshed ${processingTasks.length} tasks`,
@@ -122,13 +130,29 @@ export function VideoTasksList({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PENDING":
-        return <Badge variant="outline" className="flex items-center"><Clock className="mr-1 h-3 w-3" /> Pending</Badge>;
+        return (
+          <Badge variant="outline" className="flex items-center">
+            <Clock className="mr-1 size-3" /> Pending
+          </Badge>
+        );
       case "PROCESSING":
-        return <Badge variant="secondary" className="flex items-center"><Clock className="mr-1 h-3 w-3" /> Processing</Badge>;
+        return (
+          <Badge variant="secondary" className="flex items-center">
+            <Clock className="mr-1 size-3" /> Processing
+          </Badge>
+        );
       case "COMPLETED":
-        return <Badge className="bg-green-500 flex items-center"><CheckCircle className="mr-1 h-3 w-3" /> Completed</Badge>;
+        return (
+          <Badge className="flex items-center bg-green-500">
+            <CheckCircle className="mr-1 size-3" /> Completed
+          </Badge>
+        );
       case "FAILED":
-        return <Badge variant="destructive" className="flex items-center"><AlertCircle className="mr-1 h-3 w-3" /> Failed</Badge>;
+        return (
+          <Badge variant="destructive" className="flex items-center">
+            <AlertCircle className="mr-1 size-3" /> Failed
+          </Badge>
+        );
       default:
         return <Badge>{status}</Badge>;
     }
@@ -136,98 +160,101 @@ export function VideoTasksList({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Video Tasks</h2>
-        
-        <Button 
-          variant="outline" 
-          size="sm" 
+
+        <Button
+          variant="outline"
+          size="sm"
           onClick={refreshProcessingTasks}
           disabled={isRefreshing}
         >
-          {isRefreshing && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
-          {!isRefreshing && <RefreshCw className="mr-2 h-4 w-4" />}
+          {isRefreshing && <RefreshCw className="mr-2 size-4 animate-spin" />}
+          {!isRefreshing && <RefreshCw className="mr-2 size-4" />}
           Refresh All
         </Button>
       </div>
-      
+
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="all">
             All
-            <Badge variant="outline" className="ml-2">{tasks.length}</Badge>
+            <Badge variant="outline" className="ml-2">
+              {tasks.length}
+            </Badge>
           </TabsTrigger>
           <TabsTrigger value="pending">
             Pending
             <Badge variant="outline" className="ml-2">
-              {tasks.filter(t => t.status === "PENDING").length}
+              {tasks.filter((t) => t.status === "PENDING").length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="processing">
             Processing
             <Badge variant="outline" className="ml-2">
-              {tasks.filter(t => t.status === "PROCESSING").length}
+              {tasks.filter((t) => t.status === "PROCESSING").length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="completed">
             Completed
             <Badge variant="outline" className="ml-2">
-              {tasks.filter(t => t.status === "COMPLETED").length}
+              {tasks.filter((t) => t.status === "COMPLETED").length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="failed">
             Failed
             <Badge variant="outline" className="ml-2">
-              {tasks.filter(t => t.status === "FAILED").length}
+              {tasks.filter((t) => t.status === "FAILED").length}
             </Badge>
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value={activeTab} className="mt-6">
           {sortedTasks.length === 0 ? (
             <Card>
-              <CardContent className="pt-6 pb-4 text-center">
+              <CardContent className="pb-4 pt-6 text-center">
                 <p className="text-muted-foreground">No tasks found</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-4">
-              {sortedTasks.map(task => (
+              {sortedTasks.map((task) => (
                 <div key={task.id}>
                   <Card className="overflow-hidden">
                     <CardHeader className="py-4">
-                      <div className="flex justify-between items-center">
+                      <div className="flex items-center justify-between">
                         <div>
                           <div className="flex items-center">
-                            <PlayCircle className="h-4 w-4 mr-2 text-muted-foreground" />
+                            <PlayCircle className="mr-2 size-4 text-muted-foreground" />
                             <CardTitle className="text-base">
-                              {task.videoSettings.prompt.length > 50 
-                                ? `${task.videoSettings.prompt.substring(0, 50)}...` 
+                              {task.videoSettings.prompt.length > 50
+                                ? `${task.videoSettings.prompt.substring(0, 50)}...`
                                 : task.videoSettings.prompt}
                             </CardTitle>
                           </div>
                           <CardDescription>
-                            Created {format(new Date(task.createdAt), "MMM d, yyyy")}
+                            Created{" "}
+                            {format(new Date(task.createdAt), "MMM d, yyyy")}
                           </CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(task.status)}
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => toggleTaskExpanded(task.id)}
-                            className="p-0 h-8 w-8"
+                            className="size-8 p-0"
                           >
-                            <ChevronRight 
-                              className={`h-5 w-5 transition-transform ${
+                            <ChevronRight
+                              className={`size-5 transition-${
                                 expandedTaskId === task.id ? "rotate-90" : ""
-                              }`} 
+                              }`}
                             />
                           </Button>
                         </div>
                       </div>
                     </CardHeader>
-                    
+
                     {expandedTaskId === task.id && (
                       <CardContent>
                         <VideoTaskDetails
@@ -237,19 +264,29 @@ export function VideoTasksList({
                         />
                       </CardContent>
                     )}
-                    
-                    <CardFooter className="py-3 bg-muted/30 flex justify-between">
+
+                    <CardFooter className="flex justify-between bg-muted/30 py-3">
                       <div className="flex items-center text-sm">
-                        <span className="text-muted-foreground mr-2">Credits:</span>
+                        <span className="mr-2 text-muted-foreground">
+                          Credits:
+                        </span>
                         <span className="font-medium">{task.creditsCost}</span>
                       </div>
                       <div className="flex items-center text-sm">
-                        <span className="text-muted-foreground mr-2">Duration:</span>
-                        <span className="font-medium">{task.videoSettings.duration}s</span>
+                        <span className="mr-2 text-muted-foreground">
+                          Duration:
+                        </span>
+                        <span className="font-medium">
+                          {task.videoSettings.duration}s
+                        </span>
                       </div>
                       <div className="flex items-center text-sm">
-                        <span className="text-muted-foreground mr-2">Quality:</span>
-                        <span className="font-medium">{task.videoSettings.quality}</span>
+                        <span className="mr-2 text-muted-foreground">
+                          Quality:
+                        </span>
+                        <span className="font-medium">
+                          {task.videoSettings.quality}
+                        </span>
                       </div>
                     </CardFooter>
                   </Card>
@@ -261,4 +298,4 @@ export function VideoTasksList({
       </Tabs>
     </div>
   );
-} 
+}

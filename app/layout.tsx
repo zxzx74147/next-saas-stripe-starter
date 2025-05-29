@@ -8,8 +8,8 @@ import { cn, constructMetadata } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/analytics";
 import ModalProvider from "@/components/modals/providers";
-import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ServiceInitializer } from "@/components/service-initializer";
+import { TailwindIndicator } from "@/components/tailwind-indicator";
 
 interface RootLayoutProps {
   children: React.ReactNode;

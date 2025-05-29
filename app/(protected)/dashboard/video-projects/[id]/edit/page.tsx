@@ -1,17 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { AdvancedEditor, AdvancedVideoEditorOptions } from "@/components/video/advanced-editor";
-import { VideoPreview } from "@/components/video/video-preview";
-import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
-import { Loader2, ArrowLeft, Film, AlertTriangle, ArrowRightLeft, Copy } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRightLeft,
+  Copy,
+  Film,
+  Loader2,
+} from "lucide-react";
+
 import { VideoTask } from "@/types/video";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  AdvancedEditor,
+  AdvancedVideoEditorOptions,
+} from "@/components/video/advanced-editor";
+import { VideoPreview } from "@/components/video/video-preview";
 
 export default function EditVideoPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -19,11 +37,12 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
   const taskId = searchParams.get("taskId");
   const projectId = params.id;
   const { toast } = useToast();
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [originalTask, setOriginalTask] = useState<VideoTask | null>(null);
-  const [editSettings, setEditSettings] = useState<AdvancedVideoEditorOptions | null>(null);
+  const [editSettings, setEditSettings] =
+    useState<AdvancedVideoEditorOptions | null>(null);
   const [previewChanges, setPreviewChanges] = useState(false);
   const [creditCost, setCreditCost] = useState<number | null>(null);
   const [editHistory, setEditHistory] = useState<VideoTask[]>([]);
@@ -36,7 +55,7 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
         toast({
           title: "Error",
           description: "No task ID provided",
-          variant: "destructive"
+          variant: "destructive",
         });
         router.push(`/dashboard/video-projects/${projectId}`);
         return;
@@ -48,26 +67,28 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
         if (!taskResponse.ok) {
           throw new Error("Failed to fetch task");
         }
-        
+
         const taskData = await taskResponse.json();
         setOriginalTask(taskData);
-        
+
         // Fetch edit history if this is an edited task
         if (taskData.isEdited && taskData.originalTaskId) {
-          const historyResponse = await fetch(`/api/video-tasks/${taskData.originalTaskId}/history`);
+          const historyResponse = await fetch(
+            `/api/video-tasks/${taskData.originalTaskId}/history`,
+          );
           if (historyResponse.ok) {
             const historyData = await historyResponse.json();
             setEditHistory(historyData.history || []);
           }
         }
-        
+
         // Fetch user credit balance
-        const creditResponse = await fetch('/api/credits/balance');
+        const creditResponse = await fetch("/api/credits/balance");
         if (creditResponse.ok) {
           const creditData = await creditResponse.json();
           setUserCreditBalance(creditData.currentBalance || 0);
         }
-        
+
         // Initialize editor with existing settings
         const videoSettings = taskData.videoSettings || {};
         setEditSettings({
@@ -76,7 +97,8 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
           quality: videoSettings.quality || "1080p",
           aspectRatio: videoSettings.aspectRatio || "16:9",
           hasAdvancedEffects: videoSettings.hasAdvancedEffects || false,
-          styleDescription: videoSettings.styleDescription || videoSettings.style || "",
+          styleDescription:
+            videoSettings.styleDescription || videoSettings.style || "",
           styleIntensity: videoSettings.styleIntensity || 50,
           colorGrading: videoSettings.colorGrading || "natural",
           filterEffect: videoSettings.filterEffect || "none",
@@ -85,16 +107,16 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
           textOverlay: videoSettings.textOverlay || "",
           textPosition: videoSettings.textPosition || "bottom",
           audioUrl: videoSettings.audioUrl || "",
-          seed: videoSettings.seed || Math.floor(Math.random() * 100000)
+          seed: videoSettings.seed || Math.floor(Math.random() * 100000),
         });
-        
+
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
         toast({
           title: "Error",
           description: "Failed to load the video task",
-          variant: "destructive"
+          variant: "destructive",
         });
         router.push(`/dashboard/video-projects/${projectId}`);
       }
@@ -106,66 +128,67 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
   // Calculate credit cost for edits
   useEffect(() => {
     if (!editSettings) return;
-    
+
     const calculateCredits = async () => {
       try {
-        const response = await fetch('/api/credits/estimate', {
-          method: 'POST',
+        const response = await fetch("/api/credits/estimate", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             duration: editSettings.duration,
             quality: editSettings.quality,
-            hasAdvancedEffects: editSettings.hasAdvancedEffects
-          })
+            hasAdvancedEffects: editSettings.hasAdvancedEffects,
+          }),
         });
-        
+
         if (!response.ok) {
-          throw new Error('Failed to estimate credits');
+          throw new Error("Failed to estimate credits");
         }
-        
+
         const data = await response.json();
         setCreditCost(data.totalCredits);
       } catch (error) {
-        console.error('Error estimating credits:', error);
+        console.error("Error estimating credits:", error);
         setCreditCost(null);
       }
     };
-    
+
     calculateCredits();
   }, [editSettings]);
 
   // Handle saving changes
   const handleSaveChanges = async () => {
     if (!editSettings || !originalTask) return;
-    
+
     setIsSaving(true);
-    
+
     try {
       const response = await fetch(`/api/video-tasks/${taskId}/edit`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           projectId,
-          videoSettings: editSettings
-        })
+          videoSettings: editSettings,
+        }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save changes');
+        throw new Error(errorData.error || "Failed to save changes");
       }
-      
+
       const data = await response.json();
-      
+
       toast({
         title: "Success",
-        description: "Your video edit has been submitted and will be processed shortly",
+        description:
+          "Your video edit has been submitted and will be processed shortly",
       });
-      
+
       // Redirect to the new task
       router.push(`/dashboard/video-projects/${projectId}?taskId=${data.id}`);
     } catch (error: any) {
@@ -173,7 +196,7 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
       toast({
         title: "Error",
         description: error.message || "Failed to save changes",
-        variant: "destructive"
+        variant: "destructive",
       });
       setIsSaving(false);
     }
@@ -187,17 +210,19 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
   // Create a duplicate of the current video task
   const handleDuplicate = () => {
     if (!originalTask) return;
-    
+
     // Copy the current settings to a new edit session
-    router.push(`/dashboard/video-projects/${projectId}/create?duplicate=${taskId}`);
+    router.push(
+      `/dashboard/video-projects/${projectId}/create?duplicate=${taskId}`,
+    );
   };
 
   // If still loading
   if (isLoading) {
     return (
       <div className="container py-10">
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="flex h-64 items-center justify-center">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
       </div>
     );
@@ -205,112 +230,137 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="container py-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={() => router.push(`/dashboard/video-projects/${projectId}`)}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() =>
+              router.push(`/dashboard/video-projects/${projectId}`)
+            }
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="size-4" />
           </Button>
           <h1 className="text-2xl font-bold">Edit Video</h1>
         </div>
-        
+
         {originalTask && (
-          <Badge variant={
-            originalTask.status === "COMPLETED" ? "default" : 
-            originalTask.status === "FAILED" ? "destructive" : 
-            "secondary"
-          }>
+          <Badge
+            variant={
+              originalTask.status === "COMPLETED"
+                ? "default"
+                : originalTask.status === "FAILED"
+                  ? "destructive"
+                  : "secondary"
+            }
+          >
             {originalTask.status}
           </Badge>
         )}
       </div>
-      
+
       {originalTask?.status !== "COMPLETED" && (
-        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-md flex items-center gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-500" />
+        <div className="mb-6 flex items-center gap-3 rounded-md border border-amber-200 bg-amber-50 p-4">
+          <AlertTriangle className="size-5 text-amber-500" />
           <p className="text-sm text-amber-700">
-            This video is still being processed. You can make edits, but they will be applied to the current version.
+            This video is still being processed. You can make edits, but they
+            will be applied to the current version.
           </p>
         </div>
       )}
-      
+
       {editHistory.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-sm font-medium mb-2">Edit History</h2>
+          <h2 className="mb-2 text-sm font-medium">Edit History</h2>
           <div className="flex gap-2 overflow-x-auto pb-2">
             {editHistory.map((historyItem) => (
-              <Button 
+              <Button
                 key={historyItem.id}
                 variant="outline"
                 size="sm"
-                onClick={() => router.push(`/dashboard/video-projects/${projectId}?taskId=${historyItem.id}`)}
+                onClick={() =>
+                  router.push(
+                    `/dashboard/video-projects/${projectId}?taskId=${historyItem.id}`,
+                  )
+                }
                 className="flex items-center gap-1 whitespace-nowrap"
               >
-                <span>Version {new Date(historyItem.createdAt).toLocaleDateString()}</span>
+                <span>
+                  Version {new Date(historyItem.createdAt).toLocaleDateString()}
+                </span>
               </Button>
             ))}
           </div>
         </div>
       )}
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left column - Video preview */}
         <div className="lg:col-span-1">
           <Card className="h-full">
             <CardHeader>
               <CardTitle>Original Video</CardTitle>
               <CardDescription>
-                Created {originalTask && formatDistanceToNow(new Date(originalTask.createdAt), { addSuffix: true })}
+                Created{" "}
+                {originalTask &&
+                  formatDistanceToNow(new Date(originalTask.createdAt), {
+                    addSuffix: true,
+                  })}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {originalTask && (
-                <VideoPreview 
+                <VideoPreview
                   videoUrl={originalTask.videoUrl || undefined}
                   status={originalTask.status}
                   progress={originalTask.progress}
                 />
               )}
-              
+
               <div className="mt-4 space-y-2">
                 <div className="text-sm">
-                  <span className="font-medium">Prompt:</span> 
-                  <p className="text-muted-foreground">{originalTask?.videoSettings.prompt}</p>
+                  <span className="font-medium">Prompt:</span>
+                  <p className="text-muted-foreground">
+                    {originalTask?.videoSettings.prompt}
+                  </p>
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium">Duration:</span> 
-                  <span className="text-muted-foreground ml-1">{originalTask?.videoSettings.duration} seconds</span>
+                  <span className="font-medium">Duration:</span>
+                  <span className="ml-1 text-muted-foreground">
+                    {originalTask?.videoSettings.duration} seconds
+                  </span>
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium">Quality:</span> 
-                  <span className="text-muted-foreground ml-1">{originalTask?.videoSettings.quality}</span>
+                  <span className="font-medium">Quality:</span>
+                  <span className="ml-1 text-muted-foreground">
+                    {originalTask?.videoSettings.quality}
+                  </span>
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium">Credits:</span> 
-                  <span className="text-muted-foreground ml-1">{originalTask?.creditsCost} credits</span>
+                  <span className="font-medium">Credits:</span>
+                  <span className="ml-1 text-muted-foreground">
+                    {originalTask?.creditsCost} credits
+                  </span>
                 </div>
               </div>
-              
+
               <Separator className="my-4" />
-              
+
               <div className="flex flex-col space-y-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={handleDuplicate}
                   className="w-full"
                 >
-                  <Copy className="h-4 w-4 mr-2" />
+                  <Copy className="mr-2 size-4" />
                   Duplicate
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
-        
+
         {/* Right column - Editor */}
         <div className="lg:col-span-2">
           <Card>
@@ -320,7 +370,7 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
                 Modify the video settings below to create a new version
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent>
               {editSettings && (
                 <AdvancedEditor
@@ -332,25 +382,25 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
                 />
               )}
             </CardContent>
-            
+
             <CardFooter className="flex-col space-y-4">
               <Separator className="my-2" />
-              
-              <div className="w-full flex justify-between items-center">
+
+              <div className="flex w-full items-center justify-between">
                 <div>
                   {creditCost !== null && (
                     <div className="text-sm">
                       <span>Estimated cost: </span>
                       <span className="font-bold">{creditCost} credits</span>
-                      <span className="text-muted-foreground ml-2">
+                      <span className="ml-2 text-muted-foreground">
                         (You have {userCreditBalance} credits)
                       </span>
                     </div>
                   )}
                 </div>
-                
+
                 {previewChanges && (
-                  <div className="text-sm text-muted-foreground italic">
+                  <div className="text-sm italic text-muted-foreground">
                     Preview mode - changes shown are simulated
                   </div>
                 )}
@@ -361,4 +411,4 @@ export default function EditVideoPage({ params }: { params: { id: string } }) {
       </div>
     </div>
   );
-} 
+}

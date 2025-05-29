@@ -1,4 +1,3 @@
-import { signIn } from "next-auth/react";
 import {
   Dispatch,
   SetStateAction,
@@ -6,11 +5,12 @@ import {
   useMemo,
   useState,
 } from "react";
+import { signIn } from "next-auth/react";
 
-import { Icons } from "@/components/shared/icons";
+import { siteConfig } from "@/config/site";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { siteConfig } from "@/config/site";
+import { Icons } from "@/components/shared/icons";
 
 function SignInModal({
   showSignInModal,

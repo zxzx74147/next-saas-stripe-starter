@@ -1,11 +1,6 @@
-import { Users } from "lucide-react"
+import { Users } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function InfoCard() {
   return (
@@ -19,5 +14,5 @@ export default function InfoCard() {
         <p className="text-xs text-muted-foreground">+180.1% from last month</p>
       </CardContent>
     </Card>
-  )
+  );
 }
